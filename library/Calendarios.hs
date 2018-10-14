@@ -100,12 +100,14 @@ module Calendarios where
     dibujomes ::(String, Year, Int, Int) -> Dibujo
     dibujomes (nm,a,pd,lm) = 
         let 
-            titulo = nm ++ " " ++ show a ++ "\n\n"  -- Titulo, Tan ancho como 25
-            semana = diasSemana "es" ++"\n"         -- Dias de la semana en Idioma elegido
-            dias =                                  -- Dias del mes
-            dibujo = [titulo, semana, dias]
+            titulo = nm ++ " " ++ show a                        -- Titulo, Tan ancho como 25
+            lineaVacia = ""
+            semana = diasSemana "es"                            -- Dias de la semana en Idioma elegido
+            dias = chopDias (concatMap celdaDia [2-pd..lm])          -- Crear string de dias del mes con blancos por delante y cortados en bloques de 7 celdas
+            dibujo = [titulo, lineaVacia, semana] ++ dias ++ [lineaVacia]   -- Añadir a la lista los dias del mes
         in            
-            map (sumarBlancosHasta 25) dibujo       -- Añadir blancos por la derecha hasta 25 a todos
+            map (appendBlancosHasta 25) dibujo       -- Añadir blancos por la derecha hasta 25 a todos
+
 
     ene1 :: Year -> Int
     ene1 a = mod (a + div (a-1) 4 - div (a-1) 100 + div (a-1) 400) 7
@@ -124,15 +126,37 @@ module Calendarios where
     -- otras funciones que se necesiten:
     
     -- añade hasta n espacios blancos tras lel siguiente string
-    sumarBlancosHasta :: Int -> String -> String
-    sumarBlancosHasta i s 
+    appendBlancosHasta :: Int -> String -> String
+    appendBlancosHasta i s 
         | length s >= i = s
-        | otherwise = s ++ blancos (length s - i)
+        | otherwise = s ++ blancos (i-length s)
+
+     -- añade hasta n espacios blancos delante del siguiente string
+    prependBlancosHasta :: Int -> String -> String
+    prependBlancosHasta i s 
+        | length s >= i = s
+        | otherwise = blancos (i - length s) ++ s
 
     blancos :: Int -> String
     blancos n = [' '|i<-[1..n]]
-    
-    
+
+    -- Dados un número entre 1 y 31 , devuelve su representación de String en una 
+    -- celda de longintud mínima de 3 añadiendo blancos por delante
+    -- En caso de no ser un número valido, devuelve 3 vacíos
+    celdaDia :: Int -> String
+    celdaDia n 
+            | n <= 0 || n > 31 = appendBlancosHasta 3 ""
+            | otherwise = appendBlancosHasta 3 (prependBlancosHasta 2 (show n))
+
+    -- Corta el String de días en bloques de 7 dias creando una lista de strings de longitud 7*3 = 21
+    -- como máximo
+    chopDias :: String -> [String]
+    chopDias s =
+        case splitAt 21 s of
+            (_, []) -> [s]
+            (a,b)   ->  a:chopDias b
+           
+
     -- TODO Nombres de mes, segun numero de mes e idioma, crear tipo ennumerado
     --mes :: Int -> String -> String
     --mes n s 
@@ -144,6 +168,4 @@ module Calendarios where
             "eu" -> "Al As Az Og Or Lr Ig"
             "en" -> "Mo Tu We Th Fr Sa Su"
             _ ->  diasSemana "es"
-
-
     
