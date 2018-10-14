@@ -3,13 +3,13 @@
 # this file: <https://github.com/sol/hpack>.
 name: calendar
 version: '0.0.0'
-github: "githubuser/calendar"
+github: "mikeldalmauc/calendarioPF"
 license: MIT
-author: "Author name here"
-maintainer: "Author name here"
-# synopsis: A new Haskeleton package.
+author: "Mikel Dalmau y Julen"
+maintainer: "Mikel Dalmau y Julen"
+synopsis: Una implementación de un calendario.
 # description: calendar is a new Haskeleton package.
-# category: Other
+category: Academic
 
 extra-source-files:
 - CHANGELOG.md
