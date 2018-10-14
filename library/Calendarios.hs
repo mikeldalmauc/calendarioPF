@@ -12,6 +12,7 @@ module Calendarios where
     type Dibujo = [Linea]  -- cada dibujo es una lista de líneas (de igual longitud)
     type Linea = String   -- cada línea es una lista de caracteres
     type Year = Int
+    type Month = Int
     type Columna = Int       -- será 3 o 4
     
     -- Para imprimir un dibujo en pantalla:
@@ -109,20 +110,36 @@ module Calendarios where
             map (appendBlancosHasta 25) dibujo       -- Añadir blancos por la derecha hasta 25 a todos
 
 
+    -- ene1 a devuelve el dia de la semana del 1 de enero del año a 
+    --  siendo 1=lunes, 2=martes, ..., 6=sabado, 0=domingo
     ene1 :: Year -> Int
     ene1 a = mod (a + div (a-1) 4 - div (a-1) 100 + div (a-1) 400) 7
-    -- ene1 a devuelve el dia de la semana del 1 de enero del año a 
-    --        siendo 1=lunes, 2=martes, ..., 6=sabado, 0=domingo
-     
     
-    -- pdias :: Int -> [Int]
     -- pdias a    devuelve una lista con 12 dias que son los días de la semana 
     --            en que comienza cada mes del año a
     --            siendo 1 = lunes, 2 = martes, ..., 6= sabado, 7=domingo
     -- Ejemplo: pdias 2019 es [2,5,5,1,3,6,1,4,7,2,5,7]
+    pdias :: Year -> [Int]
+    pdias a = pdiasR (ene1 a) 1 a
+
+    -- c es el día de comienzo del mes anterior
+    -- m es el numero del mes en cuestion
+    -- a es el año
+    pdiasR :: Int -> Month -> Year -> [Int]
+    pdiasR c m a 
+            | m > 12 = []
+            | c == 0 = 7: pdiasR c' (m+1) a
+            | otherwise = c: pdiasR c' (m+1) a
+            where c' = mod (c + lmes m a) 7
     
-    
-    
+    -- Dado un mes y un año, dice cuantos dias tiene el mes en cuestión
+    lmes :: Month -> Year -> Int
+    lmes m a 
+        | m `elem` [4,6,9,11] = 30
+        | m == 2 && (mod a 4 == 0 && (mod a 100 /= 0 || mod a 400 == 0)) = 29
+        | m == 2 = 28 
+        | otherwise = 31
+            
     -- otras funciones que se necesiten:
     
     -- añade hasta n espacios blancos tras lel siguiente string
