@@ -38,29 +38,59 @@ module Calendarios where
     
     -- dibEsCorrecto :: Dibujo -> Bool   
     -- comprueba que las lineas de un dibujo tienen igual longitud
-    
+    dibEsCorrecto :: Dibujo -> Bool
+    dibEsCorrecto []        = True
+    dibEsCorrecto (x:xs)    = null (dropWhile (== (length x)) (map length (x:xs))) 
     
     -- listaDibCorrectos ::[Dibujo] -> Bool 
     -- comprueba que todos los dibujos de la lista son correctos y 
     -- tienen todos las mismas dimensiones
-    
+    listaDibCorrectos :: [Dibujo] -> Bool 
+    listaDibCorrectos []    = True
+    listaDibCorrectos s     = (foldl (&&) True (map dibEsCorrecto s)) && (todosIguales (map alto s)) && (todosIguales (map ancho s))
+
+    todosIguales :: Eq a => [a] -> Bool
+    todosIguales [] = True
+    todosIguales s  = and (map (== head s) (tail s))
     
     -- alto :: Dibujo -> Int   
     -- Devuelve la altura de un dibujo correcto
+    alto :: Dibujo -> Int
+    alto [] = 0
+    alto s 
+        | dibEsCorrecto s   = length s
+        | otherwise         = error "El dibujo no es correcto"
     
     
     -- ancho :: Dibujo -> Int  
     -- Devuelve la anchura de un dibujo correcto
-    
+    ancho :: Dibujo -> Int
+    ancho [] = 0
+    ancho s
+        | dibEsCorrecto s   = length (head s)
+        | otherwise         = error "El dibujo no es correcto"
+        
     
     -- sobre :: Dibujo -> Dibujo -> Dibujo 
     -- Precondicion: los dibujos tienen la misma anchura
     -- sobre d1 d2 pone el dibujo d1 sobre el dibujo d2
-    
+    sobre :: Dibujo -> Dibujo -> Dibujo
+    sobre [] _ = error "d1 es 'null'"
+    sobre _ [] = error "d2 es 'null'"
+    sobre d1 d2 
+        | (ancho d1) == (ancho d2)  = d1 ++ d2
+        | otherwise                 = error "No tienen la misma anchura"
+
     
     -- alLado :: Dibujo -> Dibujo -> Dibujo   
     -- Precondicion: los dibujos tienen la misma altura
     -- alLado d1 d2 pone d1 a la izquierda de d2
+    alLado :: Dibujo -> Dibujo -> Dibujo
+    alLado [] _ = error "d1 es 'null'"
+    alLado _ [] = error "d2 es 'null'"
+    alLado d1 d2
+        | (alto d1) == (alto d2)    = zipWith (++) d1 d2
+        | otherwise                 = error "No tienen la misma altura"
     
     -- apilar :: [Dibujo] -> Dibujo
     -- Precondicion: los dibujos de la lista (no vacia) tienen la misma anchura
