@@ -24,15 +24,15 @@ module Calendarios where
                        (putStr . concat . map (++"\n")) dib
     
     -- Para imprimir el calendario de un año con un número de columnas:
-    printCalendario :: Columna ->  Year -> IO()
-    printCalendario c a = printDibujo (calendario c a)
+    printCalendario :: Columna -> Year -> String -> IO()
+    printCalendario c a lang = printDibujo (calendario c lang a)
     
     
     -- Funcion principal:
     
-    calendario :: Columna -> Year -> Dibujo   
+    calendario :: Columna -> String -> Year -> Dibujo   
     --el dibujo de un calendario en c columnas de un año dado
-    calendario c  =  bloque c . map dibujomes . meses
+    calendario c lang y =  bloque c (map (dibujomes lang) (meses y lang))
     
     --------------------------------------------------------------------
     --  Define las siguientes funciones sobre dibujos:
@@ -142,10 +142,10 @@ module Calendarios where
     -- meses ::  Year -> [(String, Year, Int, Int)]
     -- meses n devuelve una lista de 12 elementos con los datos relevantes de cada uno de
     -- los meses del año n: (nombre del mes, n, primer día del mes, longitud del mes)
-    meses :: Year -> [(String, Year, Int, Int)]
-    meses n = 
+    meses :: Year -> String -> [(String, Year, Int, Int)]
+    meses n lang = 
         let 
-            nombreMeses = nombresMeses "es"
+            nombreMeses = nombresMeses lang
             year = replicate 12 n
             pDias = pdias n
             lmeses = [lmes i n | i<-[1..12]] 
@@ -155,12 +155,12 @@ module Calendarios where
     -- dibujomes (nm,a,pd,lm) devuelve un dibujo de dimensiones 10x25 formado 
     -- por el titulo y la tabla del mes de nombre nm y año a. 
     -- Necesita como parámetros el primer dia pd y la longitud del mes lm
-    dibujomes ::(String, Year, Int, Int) -> Dibujo
-    dibujomes (nm,a,pd,lm) = 
+    dibujomes ::String -> (String, Year, Int, Int) -> Dibujo
+    dibujomes lang (nm,a,pd,lm) = 
         let 
             titulo = nm ++ " " ++ show a                        -- Titulo, Tan ancho como 25
             lineaVacia = ""
-            semana = diasSemana "es"                            -- Dias de la semana en Idioma elegido
+            semana = diasSemana lang                            -- Dias de la semana en Idioma elegido
             dias = chopDias (concatMap celdaDia [2-pd..lm])          -- Crear string de dias del mes con blancos por delante y cortados en bloques de 7 celdas
             dibujo = [titulo, lineaVacia, semana] ++ dias ++ (replicate (7- length dias) lineaVacia)   -- Añadir a la lista los dias del mes
         in            
