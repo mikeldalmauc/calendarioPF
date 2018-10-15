@@ -49,11 +49,11 @@ module Calendarios where
     -- tienen todos las mismas dimensiones
     listaDibCorrectos :: [Dibujo] -> Bool 
     listaDibCorrectos []    = True
-    listaDibCorrectos s     =  all dibEsCorrecto s && all alto s && all ancho s
+    listaDibCorrectos s     = all dibEsCorrecto s && todosIguales (map alto s) && todosIguales (map ancho s)
 
-    --todosIguales :: Eq a => [a] -> Bool
-    --todosIguales [] = True
-    --todosIguales s  = all (== head s) (tail s)
+    todosIguales :: Eq a => [a] -> Bool
+    todosIguales [] = True
+    todosIguales s  = all (== head s) (tail s)
     
     -- alto :: Dibujo -> Int   
     -- Devuelve la altura de un dibujo correcto
@@ -97,6 +97,7 @@ module Calendarios where
     -- apilar :: [Dibujo] -> Dibujo
     -- Precondicion: los dibujos de la lista (no vacia) tienen la misma anchura
     -- apila todos los dibujos de una lista (el primero de la lista queda en la cima de la pila)
+
     
     
     -- extender :: [Dibujo] -> Dibujo
