@@ -38,9 +38,8 @@ module Calendarios where
     --  Define las siguientes funciones sobre dibujos:
     --------------------------------------------------------------------
     
-    -- dibEsCorrecto :: Dibujo -> Bool   
+    dibEsCorrecto :: Dibujo -> Bool   
     -- comprueba que las lineas de un dibujo tienen igual longitud
-    dibEsCorrecto :: Dibujo -> Bool
     dibEsCorrecto []        = True
     dibEsCorrecto (x:xs)    = null (dropWhile (== length x) (map length (x:xs))) 
     
@@ -51,6 +50,7 @@ module Calendarios where
     listaDibCorrectos []    = True
     listaDibCorrectos s     = all dibEsCorrecto s && todosIguales (map alto s) && todosIguales (map ancho s)
 
+    -- TODO: Documentar
     todosIguales :: Eq a => [a] -> Bool
     todosIguales [] = True
     todosIguales s  = all (== head s) (tail s)
