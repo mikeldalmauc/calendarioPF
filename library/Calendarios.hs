@@ -42,18 +42,18 @@ module Calendarios where
     -- comprueba que las lineas de un dibujo tienen igual longitud
     dibEsCorrecto :: Dibujo -> Bool
     dibEsCorrecto []        = True
-    dibEsCorrecto (x:xs)    = null (dropWhile (== (length x)) (map length (x:xs))) 
+    dibEsCorrecto (x:xs)    = null (dropWhile (== length x) (map length (x:xs))) 
     
     -- listaDibCorrectos ::[Dibujo] -> Bool 
     -- comprueba que todos los dibujos de la lista son correctos y 
     -- tienen todos las mismas dimensiones
     listaDibCorrectos :: [Dibujo] -> Bool 
     listaDibCorrectos []    = True
-    listaDibCorrectos s     = (foldl (&&) True (map dibEsCorrecto s)) && (todosIguales (map alto s)) && (todosIguales (map ancho s))
+    listaDibCorrectos s     =  all dibEsCorrecto s && all alto s && all ancho s
 
-    todosIguales :: Eq a => [a] -> Bool
-    todosIguales [] = True
-    todosIguales s  = and (map (== head s) (tail s))
+    --todosIguales :: Eq a => [a] -> Bool
+    --todosIguales [] = True
+    --todosIguales s  = all (== head s) (tail s)
     
     -- alto :: Dibujo -> Int   
     -- Devuelve la altura de un dibujo correcto
@@ -80,7 +80,7 @@ module Calendarios where
     sobre [] _ = error "d1 es 'null'"
     sobre _ [] = error "d2 es 'null'"
     sobre d1 d2 
-        | (ancho d1) == (ancho d2)  = d1 ++ d2
+        | ancho d1 == ancho d2  = d1 ++ d2
         | otherwise                 = error "No tienen la misma anchura"
 
     
@@ -91,7 +91,7 @@ module Calendarios where
     alLado [] _ = error "d1 es 'null'"
     alLado _ [] = error "d2 es 'null'"
     alLado d1 d2
-        | (alto d1) == (alto d2)    = zipWith (++) d1 d2
+        | alto d1 == alto d2    = zipWith (++) d1 d2
         | otherwise                 = error "No tienen la misma altura"
     
     -- apilar :: [Dibujo] -> Dibujo
