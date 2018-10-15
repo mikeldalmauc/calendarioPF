@@ -8,6 +8,8 @@
 -- donde c = columnas (3 ó 4) y  n = año cuyo calendario deseamos imprimir
 
 module Calendarios where
+    
+    import qualified Data.List
 
     type Dibujo = [Linea]  -- cada dibujo es una lista de líneas (de igual longitud)
     type Linea = String   -- cada línea es una lista de caracteres
@@ -22,15 +24,15 @@ module Calendarios where
                        (putStr . concat . map (++"\n")) dib
     
     -- Para imprimir el calendario de un año con un número de columnas:
-    -- printCalendario :: Columna ->  Year -> IO()
-    -- printCalendario c a = printDibujo (calendario c a)
+   -- printCalendario :: Columna ->  Year -> IO()
+    --printCalendario c a = printDibujo (calendario c a)
     
     
     -- Funcion principal:
     
-    -- calendario :: Columna -> Year -> Dibujo   
+    --calendario :: Columna -> Year -> Dibujo   
     -- el dibujo de un calendario en c columnas de un año dado
-    -- calendario c  =  bloque c . map dibujomes . meses
+    --calendario c  =  bloque c . map dibujomes . meses
     
     --------------------------------------------------------------------
     --  Define las siguientes funciones sobre dibujos:
@@ -114,8 +116,6 @@ module Calendarios where
     
     -- otras funciones auxiliares sobre dibujos que se necesiten:
     
-    
-    
     -------------------------------------------------------------------------------
     --  Define constantes y funciones necesarias para calcular y dibujar los meses 
     -------------------------------------------------------------------------------
@@ -123,7 +123,15 @@ module Calendarios where
     -- meses ::  Year -> [(String, Year, Int, Int)]
     -- meses n devuelve una lista de 12 elementos con los datos relevantes de cada uno de
     -- los meses del año n: (nombre del mes, n, primer día del mes, longitud del mes)
-    
+    meses :: Year -> [(String, Year, Int, Int)]
+    meses n = 
+        let 
+            nombreMeses = nombresMeses "es"
+            year = replicate 12 n
+            pDias = pdias n
+            lmeses = [lmes i n | i<-[1..12]] 
+        in 
+            Data.List.zip4 nombreMeses year pDias lmeses
     
     -- dibujomes (nm,a,pd,lm) devuelve un dibujo de dimensiones 10x25 formado 
     -- por el titulo y la tabla del mes de nombre nm y año a. 
@@ -152,7 +160,7 @@ module Calendarios where
     pdias :: Year -> [Int]
     pdias a = pdiasR (ene1 a) 1 a
 
-    -- c es el día de comienzo del mes anterior
+    -- c es el día de comienzo del mes 
     -- m es el numero del mes en cuestion
     -- a es el año
     pdiasR :: Int -> Month -> Year -> [Int]
@@ -162,7 +170,7 @@ module Calendarios where
             | otherwise = c: pdiasR c' (m+1) a
             where c' = mod (c + lmes m a) 7
     
-    -- Dado un mes y un año, dice cuantos dias tiene el mes en cuestión
+    -- Dado un mes y un año, dice cuantos dias tiene ese mes
     lmes :: Month -> Year -> Int
     lmes m a 
         | m `elem` [4,6,9,11] = 30
@@ -185,15 +193,13 @@ module Calendarios where
         | otherwise = blancos (i - length s) ++ s
 
     blancos :: Int -> String
-    blancos n = [' '|i<-[1..n]]
+    blancos n = replicate n ' '
 
     -- Dados un número entre 1 y 31 , devuelve su representación de String en una 
     -- celda de longintud mínima de 3 añadiendo blancos por delante
     -- En caso de no ser un número valido, devuelve 3 vacíos
     celdaDia :: Int -> String
-    celdaDia n 
-            | n <= 0 || n > 31 = appendBlancosHasta 3 ""
-            | otherwise = appendBlancosHasta 3 (prependBlancosHasta 2 (show n))
+    celdaDia n = appendBlancosHasta 3 (prependBlancosHasta 2 (show n))
 
     -- Corta el String de días en bloques de 7 dias creando una lista de strings de longitud 7*3 = 21
     -- como máximo
@@ -207,12 +213,23 @@ module Calendarios where
     -- TODO Nombres de mes, segun numero de mes e idioma, crear tipo ennumerado
     --mes :: Int -> String -> String
     --mes n s 
-        
+    
+    nombresMeses :: String -> [String]
+    nombresMeses s = 
+        case s of
+            "es" -> ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"]
+            "eu" -> ["Urtarrila","Otsaila","Martxoa","Apirila","Maiatza","Ekaina","Uzataila","Abuztua","Iraila","Urria","Azaroa","Abendua"]
+            "en" -> ["January","February","March","April","May","June","July","August","September","October","November","December"]
+            "ca" -> ["Gener","Febrer","Març","Abril","Maig","Juny","Juliol","Agost","Septembre","Octubre","Novembre","Decembre"]
+            _ ->  nombresMeses "es"
+    
+
     diasSemana :: String -> String
     diasSemana s =
         case s of
             "es" -> "Lu Ma Mi Ju Vi Sa Do"
             "eu" -> "Al As Az Og Or Lr Ig"
             "en" -> "Mo Tu We Th Fr Sa Su"
+            "ca" -> "Dl Dm Dc Dj Dv Ds Dg"
             _ ->  diasSemana "es"
     
