@@ -24,15 +24,15 @@ module Calendarios where
                        (putStr . concat . map (++"\n")) dib
     
     -- Para imprimir el calendario de un año con un número de columnas:
-   -- printCalendario :: Columna ->  Year -> IO()
-    --printCalendario c a = printDibujo (calendario c a)
+    printCalendario :: Columna ->  Year -> IO()
+    printCalendario c a = printDibujo (calendario c a)
     
     
     -- Funcion principal:
     
-    --calendario :: Columna -> Year -> Dibujo   
-    -- el dibujo de un calendario en c columnas de un año dado
-    --calendario c  =  bloque c . map dibujomes . meses
+    calendario :: Columna -> Year -> Dibujo   
+    --el dibujo de un calendario en c columnas de un año dado
+    calendario c  =  bloque c . map dibujomes . meses
     
     --------------------------------------------------------------------
     --  Define las siguientes funciones sobre dibujos:
@@ -97,22 +97,40 @@ module Calendarios where
     -- apilar :: [Dibujo] -> Dibujo
     -- Precondicion: los dibujos de la lista (no vacia) tienen la misma anchura
     -- apila todos los dibujos de una lista (el primero de la lista queda en la cima de la pila)
-
+    apilar :: [Dibujo] -> Dibujo
+    apilar [] = []
+    apilar (x:xs)
+        | todosIguales (map ancho (x:xs))   = foldl sobre x xs
+        | otherwise                         = error "No tienen la misma anchura"
     
     
     -- extender :: [Dibujo] -> Dibujo
     -- Precondicion: los dibujos de la lista (no vacia) tienen la misma altura
     -- extiende todos los dibujos de una lista (el primero de la lista queda el más a la izquierda)
+    extender :: [Dibujo] -> Dibujo
+    extender [] = []
+    extender (x:xs)
+        | null xs                           = x
+        | todosIguales (map alto (x:xs))    = foldl alLado x xs
+        | otherwise                         = error "No tienen la misma altura"
     
     
     -- dibBlanco :: (Int,Int) -> Dibujo
     -- dibBlanco (al,an) devuelve el dibujo de caracteres blancos de altura al y anchura an
     -- Precondicion: al>0 && an>0
+    dibBlanco :: (Int,Int) -> Dibujo
+    dibBlanco (al, an)
+        | al>0 && an>0  = replicate al (blancos an)
+        | otherwise     = error "Altura y anchura <= 0"
     
     
     -- bloque :: Int -> [Dibujo] -> Dibujo
     -- bloque n dibs es el dibujo formado al agrupar de n en n los dibujos de la lista dibs,
     -- extender cada sublista y luego apilarlas
+    bloque :: Int -> [Dibujo] -> Dibujo
+    bloque n dibs
+        | length dibs >= n  =  (extender (take n dibs)) ++ (bloque n (drop n dibs))
+        | otherwise         = extender dibs
     
     
     -- otras funciones auxiliares sobre dibujos que se necesiten:
@@ -144,7 +162,7 @@ module Calendarios where
             lineaVacia = ""
             semana = diasSemana "es"                            -- Dias de la semana en Idioma elegido
             dias = chopDias (concatMap celdaDia [2-pd..lm])          -- Crear string de dias del mes con blancos por delante y cortados en bloques de 7 celdas
-            dibujo = [titulo, lineaVacia, semana] ++ dias ++ [lineaVacia]   -- Añadir a la lista los dias del mes
+            dibujo = [titulo, lineaVacia, semana] ++ dias ++ (replicate (7- length dias) lineaVacia)   -- Añadir a la lista los dias del mes
         in            
             map (appendBlancosHasta 25) dibujo       -- Añadir blancos por la derecha hasta 25 a todos
 
@@ -200,7 +218,9 @@ module Calendarios where
     -- celda de longintud mínima de 3 añadiendo blancos por delante
     -- En caso de no ser un número valido, devuelve 3 vacíos
     celdaDia :: Int -> String
-    celdaDia n = appendBlancosHasta 3 (prependBlancosHasta 2 (show n))
+    celdaDia n 
+        | n <= 0    = blancos 3
+        | otherwise = appendBlancosHasta 3 (prependBlancosHasta 2 (show n))
 
     -- Corta el String de días en bloques de 7 dias creando una lista de strings de longitud 7*3 = 21
     -- como máximo
