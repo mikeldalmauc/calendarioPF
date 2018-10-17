@@ -1,7 +1,7 @@
 --------------------------------------------------------------------
 --  PRACTICA: CALENDARIO        --        PF  2018-19
 
---  Nombre(s):   
+--  Nombre(s):   Mikel Dalmau y Julen Fernandino
 ---------------------------------------------------------------------
 
 -- Llamada principal es:  printCalendario c n 
@@ -23,7 +23,7 @@ module Calendarios where
                        putStr "\n"
                        (putStr . concat . map (++"\n")) dib
     
-    -- Para imprimir el calendario de un año con un número de columnas:
+    -- Para imprimir el calendario de un año con un número de columnas y un idioma ("en","es","en" y "ca")
     printCalendario :: Columna -> Year -> String -> IO()
     printCalendario c a lang = printDibujo (calendario c lang a)
     
@@ -31,7 +31,7 @@ module Calendarios where
     -- Funcion principal:
     
     calendario :: Columna -> String -> Year -> Dibujo   
-    --el dibujo de un calendario en c columnas de un año dado
+    --el dibujo de un calendario en c columnas de un año dado y un idioma ("en","es","en" y "ca")
     calendario c lang y =  bloque c (map (dibujomes lang) (meses y lang))
     
     --------------------------------------------------------------------
@@ -43,40 +43,36 @@ module Calendarios where
     dibEsCorrecto []        = True
     dibEsCorrecto (x:xs)    = null (dropWhile (== length x) (map length (x:xs))) 
     
-    -- listaDibCorrectos ::[Dibujo] -> Bool 
-    -- comprueba que todos los dibujos de la lista son correctos y 
-    -- tienen todos las mismas dimensiones
     listaDibCorrectos :: [Dibujo] -> Bool 
+    -- comprueba que todos los dibujos de la lista son correctos y 
+    -- tienen todos las mismas dimensiones    
     listaDibCorrectos []    = True
     listaDibCorrectos s     = all dibEsCorrecto s && todosIguales (map alto s) && todosIguales (map ancho s)
 
-    -- TODO: Documentar
     todosIguales :: Eq a => [a] -> Bool
+    -- Comprueba si todos los elementos de una lista son iguales y nos devuelve verdadero o falso.
     todosIguales [] = True
     todosIguales s  = all (== head s) (tail s)
     
-    -- alto :: Dibujo -> Int   
+    alto :: Dibujo -> Int 
     -- Devuelve la altura de un dibujo correcto
-    alto :: Dibujo -> Int
     alto [] = 0
     alto s 
         | dibEsCorrecto s   = length s
         | otherwise         = error "El dibujo no es correcto"
     
     
-    -- ancho :: Dibujo -> Int  
-    -- Devuelve la anchura de un dibujo correcto
     ancho :: Dibujo -> Int
+    -- Devuelve la anchura de un dibujo correcto
     ancho [] = 0
     ancho s
         | dibEsCorrecto s   = length (head s)
         | otherwise         = error "El dibujo no es correcto"
         
     
-    -- sobre :: Dibujo -> Dibujo -> Dibujo 
+    sobre :: Dibujo -> Dibujo -> Dibujo 
     -- Precondicion: los dibujos tienen la misma anchura
     -- sobre d1 d2 pone el dibujo d1 sobre el dibujo d2
-    sobre :: Dibujo -> Dibujo -> Dibujo
     sobre [] _ = error "d1 es 'null'"
     sobre _ [] = error "d2 es 'null'"
     sobre d1 d2 
@@ -84,30 +80,27 @@ module Calendarios where
         | otherwise                 = error "No tienen la misma anchura"
 
     
-    -- alLado :: Dibujo -> Dibujo -> Dibujo   
+    alLado :: Dibujo -> Dibujo -> Dibujo   
     -- Precondicion: los dibujos tienen la misma altura
     -- alLado d1 d2 pone d1 a la izquierda de d2
-    alLado :: Dibujo -> Dibujo -> Dibujo
     alLado [] _ = error "d1 es 'null'"
     alLado _ [] = error "d2 es 'null'"
     alLado d1 d2
         | alto d1 == alto d2    = zipWith (++) d1 d2
         | otherwise                 = error "No tienen la misma altura"
     
-    -- apilar :: [Dibujo] -> Dibujo
+    apilar :: [Dibujo] -> Dibujo
     -- Precondicion: los dibujos de la lista (no vacia) tienen la misma anchura
     -- apila todos los dibujos de una lista (el primero de la lista queda en la cima de la pila)
-    apilar :: [Dibujo] -> Dibujo
     apilar [] = []
     apilar (x:xs)
         | todosIguales (map ancho (x:xs))   = foldl sobre x xs
         | otherwise                         = error "No tienen la misma anchura"
     
     
-    -- extender :: [Dibujo] -> Dibujo
+    extender :: [Dibujo] -> Dibujo
     -- Precondicion: los dibujos de la lista (no vacia) tienen la misma altura
     -- extiende todos los dibujos de una lista (el primero de la lista queda el más a la izquierda)
-    extender :: [Dibujo] -> Dibujo
     extender [] = []
     extender (x:xs)
         | null xs                           = x
@@ -115,19 +108,17 @@ module Calendarios where
         | otherwise                         = error "No tienen la misma altura"
     
     
-    -- dibBlanco :: (Int,Int) -> Dibujo
+    dibBlanco :: (Int,Int) -> Dibujo
     -- dibBlanco (al,an) devuelve el dibujo de caracteres blancos de altura al y anchura an
     -- Precondicion: al>0 && an>0
-    dibBlanco :: (Int,Int) -> Dibujo
     dibBlanco (al, an)
         | al>0 && an>0  = replicate al (blancos an)
         | otherwise     = error "Altura y anchura <= 0"
     
     
-    -- bloque :: Int -> [Dibujo] -> Dibujo
+    bloque :: Int -> [Dibujo] -> Dibujo
     -- bloque n dibs es el dibujo formado al agrupar de n en n los dibujos de la lista dibs,
     -- extender cada sublista y luego apilarlas
-    bloque :: Int -> [Dibujo] -> Dibujo
     bloque n dibs
         | length dibs >= n  =  (extender (take n dibs)) ++ (bloque n (drop n dibs))
         | otherwise         = extender dibs
@@ -139,9 +130,10 @@ module Calendarios where
     --  Define constantes y funciones necesarias para calcular y dibujar los meses 
     -------------------------------------------------------------------------------
     
-    -- meses ::  Year -> [(String, Year, Int, Int)]
+    
     -- meses n devuelve una lista de 12 elementos con los datos relevantes de cada uno de
     -- los meses del año n: (nombre del mes, n, primer día del mes, longitud del mes)
+    -- el idioma lang
     meses :: Year -> String -> [(String, Year, Int, Int)]
     meses n lang = 
         let 
@@ -154,7 +146,7 @@ module Calendarios where
     
     -- dibujomes (nm,a,pd,lm) devuelve un dibujo de dimensiones 10x25 formado 
     -- por el titulo y la tabla del mes de nombre nm y año a. 
-    -- Necesita como parámetros el primer dia pd y la longitud del mes lm
+    -- Necesita como parámetros el idioma  lang , el primer dia pd y la longitud del mes lm
     dibujomes ::String -> (String, Year, Int, Int) -> Dibujo
     dibujomes lang (nm,a,pd,lm) = 
         let 
@@ -205,12 +197,13 @@ module Calendarios where
         | length s >= i = s
         | otherwise = s ++ blancos (i-length s)
 
-     -- añade hasta n espacios blancos delante del siguiente string
+    -- añade hasta n espacios blancos delante del siguiente string
     prependBlancosHasta :: Int -> String -> String
     prependBlancosHasta i s 
         | length s >= i = s
         | otherwise = blancos (i - length s) ++ s
 
+    -- devuelve un string de blancos, con un número n que le demos como parámetro.
     blancos :: Int -> String
     blancos n = replicate n ' '
 
@@ -235,6 +228,8 @@ module Calendarios where
     --mes :: Int -> String -> String
     --mes n s 
     
+    -- devuleve una lista con los nombres de los meses.
+    -- la lista dependerá del idioma s que le pasemos como párametro, o "es" por defecto.
     nombresMeses :: String -> [String]
     nombresMeses s = 
         case s of
@@ -245,6 +240,8 @@ module Calendarios where
             _ ->  nombresMeses "es"
     
 
+    -- devuleve una lista con los nombres de los días.
+    -- la lista dependerá del idioma s que le pasemos como párametro, o "es" por defecto.
     diasSemana :: String -> String
     diasSemana s =
         case s of
