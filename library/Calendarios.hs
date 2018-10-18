@@ -16,6 +16,7 @@ module Calendarios where
     type Year = Int
     type Month = Int
     type Columna = Int       -- será 3 o 4
+    type Lang = String    -- "en","es","eu","ca" u otros
     
     -- Para imprimir un dibujo en pantalla:
     printDibujo :: Dibujo -> IO()
@@ -23,15 +24,15 @@ module Calendarios where
                        putStr "\n"
                        (putStr . concat . map (++"\n")) dib
     
-    -- Para imprimir el calendario de un año con un número de columnas y un idioma ("en","es","en" y "ca")
-    printCalendario :: Columna -> Year -> String -> IO()
+    -- Para imprimir el calendario de un año con un número de columnas y un idioma ("en","es","eu" y "ca")
+    printCalendario :: Columna -> Year -> Lang -> IO()
     printCalendario c a lang = printDibujo (calendario c lang a)
     
     
     -- Funcion principal:
     
-    calendario :: Columna -> String -> Year -> Dibujo   
-    --el dibujo de un calendario en c columnas de un año dado y un idioma ("en","es","en" y "ca")
+    calendario :: Columna -> Lang -> Year -> Dibujo   
+    --el dibujo de un calendario en c columnas de un año dado y un idioma ("en","es","eu" y "ca")
     calendario c lang y =  bloque c (map (dibujomes lang) (meses y lang))
     
     --------------------------------------------------------------------
@@ -120,7 +121,7 @@ module Calendarios where
     -- bloque n dibs es el dibujo formado al agrupar de n en n los dibujos de la lista dibs,
     -- extender cada sublista y luego apilarlas
     bloque n dibs
-        | length dibs >= n  =  (extender (take n dibs)) ++ (bloque n (drop n dibs))
+        | length dibs >= n  = extender (take n dibs) ++ bloque n (drop n dibs)
         | otherwise         = extender dibs
     
     
@@ -131,58 +132,57 @@ module Calendarios where
     -------------------------------------------------------------------------------
     
     
+    meses :: Year -> Lang -> [(String, Year, Int, Int)]
     -- meses n devuelve una lista de 12 elementos con los datos relevantes de cada uno de
     -- los meses del año n: (nombre del mes, n, primer día del mes, longitud del mes)
-    -- el idioma lang
-    meses :: Year -> String -> [(String, Year, Int, Int)]
     meses n lang = 
         let 
             nombreMeses = nombresMeses lang
             year = replicate 12 n
-            pDias = pdias n
+            pDias = pdias (ene1 n) 1 n
             lmeses = [lmes i n | i<-[1..12]] 
         in 
             Data.List.zip4 nombreMeses year pDias lmeses
     
+            
+    dibujomes ::Lang -> (String, Year, Int, Int) -> Dibujo
     -- dibujomes (nm,a,pd,lm) devuelve un dibujo de dimensiones 10x25 formado 
-    -- por el titulo y la tabla del mes de nombre nm y año a. 
-    -- Necesita como parámetros el idioma  lang , el primer dia pd y la longitud del mes lm
-    dibujomes ::String -> (String, Year, Int, Int) -> Dibujo
+    -- por el titulo y la tabla del mes de nombre nm y año a.
     dibujomes lang (nm,a,pd,lm) = 
         let 
-            titulo = nm ++ " " ++ show a                        -- Titulo, Tan ancho como 25
+            titulo = nm ++ " " ++ show a
             lineaVacia = ""
-            semana = diasSemana lang                            -- Dias de la semana en Idioma elegido
-            dias = chopDias (concatMap celdaDia [2-pd..lm])          -- Crear string de dias del mes con blancos por delante y cortados en bloques de 7 celdas
-            dibujo = [titulo, lineaVacia, semana] ++ dias ++ (replicate (7- length dias) lineaVacia)   -- Añadir a la lista los dias del mes
+            semana = diasSemana lang
+            dias = chopDias (concatMap celdaDia [2-pd..lm])
+            dibujo = [titulo, lineaVacia, semana] ++ dias ++ replicate (7- length dias) lineaVacia   -- Añadir a la lista todas las filas necesarias
         in            
             map (appendBlancosHasta 25) dibujo       -- Añadir blancos por la derecha hasta 25 a todos
 
 
+    ene1 :: Year -> Int
     -- ene1 a devuelve el dia de la semana del 1 de enero del año a 
     --  siendo 1=lunes, 2=martes, ..., 6=sabado, 0=domingo
-    ene1 :: Year -> Int
     ene1 a = mod (a + div (a-1) 4 - div (a-1) 100 + div (a-1) 400) 7
-    
-    -- pdias a    devuelve una lista con 12 dias que son los días de la semana 
-    --            en que comienza cada mes del año a
-    --            siendo 1 = lunes, 2 = martes, ..., 6= sabado, 7=domingo
-    -- Ejemplo: pdias 2019 es [2,5,5,1,3,6,1,4,7,2,5,7]
-    pdias :: Year -> [Int]
-    pdias a = pdiasR (ene1 a) 1 a
 
+
+    pdias :: Int -> Month -> Year -> [Int]
+    -- pdias c m a    devuelve una lista con 12 dias que son los días de la semana 
+    --                en que comienza cada mes del año a
+    --                siendo 1 = lunes, 2 = martes, ..., 6= sabado, 7=domingo
+    --  
+    --   Ejemplo: pdias 2019 es [2,5,5,1,3,6,1,4,7,2,5,7]
     -- c es el día de comienzo del mes 
     -- m es el numero del mes en cuestion
     -- a es el año
-    pdiasR :: Int -> Month -> Year -> [Int]
-    pdiasR c m a 
+    pdias c m a 
             | m > 12 = []
-            | c == 0 = 7: pdiasR c' (m+1) a
-            | otherwise = c: pdiasR c' (m+1) a
+            | c == 0 = 7: pdias c' (m+1) a
+            | otherwise = c: pdias c' (m+1) a
             where c' = mod (c + lmes m a) 7
     
-    -- Dado un mes y un año, dice cuantos dias tiene ese mes
+
     lmes :: Month -> Year -> Int
+    -- Dado un mes y un año, dice cuantos dias tiene ese mes
     lmes m a 
         | m `elem` [4,6,9,11] = 30
         | m == 2 && (mod a 4 == 0 && (mod a 100 /= 0 || mod a 400 == 0)) = 29
@@ -191,46 +191,46 @@ module Calendarios where
             
     -- otras funciones que se necesiten:
     
-    -- añade hasta n espacios blancos tras lel siguiente string
     appendBlancosHasta :: Int -> String -> String
+    -- añade hasta n espacios blancos tras lel siguiente string
     appendBlancosHasta i s 
         | length s >= i = s
         | otherwise = s ++ blancos (i-length s)
 
-    -- añade hasta n espacios blancos delante del siguiente string
+
     prependBlancosHasta :: Int -> String -> String
+    -- añade hasta n espacios blancos delante del siguiente string
     prependBlancosHasta i s 
         | length s >= i = s
         | otherwise = blancos (i - length s) ++ s
+    
 
-    -- devuelve un string de blancos, con un número n que le demos como parámetro.
     blancos :: Int -> String
+    -- devuelve un string de blancos, con un número n que le demos como parámetro.
     blancos n = replicate n ' '
 
-    -- Dados un número entre 1 y 31 , devuelve su representación de String en una 
-    -- celda de longintud mínima de 3 añadiendo blancos por delante
-    -- En caso de no ser un número valido, devuelve 3 vacíos
+
     celdaDia :: Int -> String
+    -- Dado un número mayor que 0, devuelve su representación de String en una 
+    -- celda de longintud mínima de 3 añadiendo hasta 1 blanco por delante y el resto por detrás.
+    -- En caso de no ser un número valido, devuelve 3 espacios.
     celdaDia n 
         | n <= 0    = blancos 3
         | otherwise = appendBlancosHasta 3 (prependBlancosHasta 2 (show n))
 
+
+    chopDias :: String -> [String]
     -- Corta el String de días en bloques de 7 dias creando una lista de strings de longitud 7*3 = 21
     -- como máximo
-    chopDias :: String -> [String]
     chopDias s =
         case splitAt 21 s of
             (_, []) -> [s]
             (a,b)   ->  a:chopDias b
            
-
-    -- TODO Nombres de mes, segun numero de mes e idioma, crear tipo ennumerado
-    --mes :: Int -> String -> String
-    --mes n s 
-    
+        
+    nombresMeses :: Lang -> [String]
     -- devuleve una lista con los nombres de los meses.
     -- la lista dependerá del idioma s que le pasemos como párametro, o "es" por defecto.
-    nombresMeses :: String -> [String]
     nombresMeses s = 
         case s of
             "es" -> ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"]
@@ -240,9 +240,9 @@ module Calendarios where
             _ ->  nombresMeses "es"
     
 
+    diasSemana :: String -> String
     -- devuleve una lista con los nombres de los días.
     -- la lista dependerá del idioma s que le pasemos como párametro, o "es" por defecto.
-    diasSemana :: String -> String
     diasSemana s =
         case s of
             "es" -> "Lu Ma Mi Ju Vi Sa Do"

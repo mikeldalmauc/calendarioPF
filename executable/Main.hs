@@ -4,5 +4,4 @@
 import qualified Calendarios
 
 main :: IO ()
-main = Calendarios.printDibujo (Calendarios.dibujomes ("Enero",2222,1,28))
-
+main = Calendarios.printCalendario 3 2018 "es"
