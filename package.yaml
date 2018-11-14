@@ -6,7 +6,7 @@ version: '0.0.0'
 github: "mikeldalmauc/calendarioPF"
 license: MIT
 author: "Mikel Dalmau y Julen"
-maintainer: "Mikel Dalmau y Julen"
+maintainer: "Mikel Dalmau y Julen Fernandino"
 synopsis: Una implementación de un calendario.
 # description: calendar is a new Haskeleton package.
 category: Academic
@@ -59,6 +59,7 @@ tests:
     - calendar
     - tasty
     - tasty-hspec
+    - tasty-hunit
     ghc-options:
     - -rtsopts
     - -threaded

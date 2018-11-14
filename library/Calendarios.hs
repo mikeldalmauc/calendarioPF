@@ -154,7 +154,7 @@ module Calendarios where
             lineaVacia = ""
             semana = diasSemana lang
             dias = chopDias (concatMap celdaDia [2-pd..lm])
-            dibujo = [titulo, lineaVacia, semana] ++ dias ++ replicate (7- length dias) lineaVacia   -- Añadir a la lista todas las filas necesarias
+            dibujo = [titulo, lineaVacia, semana] ++ dias ++ replicate (7-length dias) lineaVacia   -- Añadir a la lista todas las filas necesarias
         in            
             map (appendBlancosHasta 25) dibujo       -- Añadir blancos por la derecha hasta 25 a todos
 
@@ -227,7 +227,7 @@ module Calendarios where
             (_, []) -> [s]
             (a,b)   ->  a:chopDias b
            
-        
+
     nombresMeses :: Lang -> [String]
     -- devuleve una lista con los nombres de los meses.
     -- la lista dependerá del idioma s que le pasemos como párametro, o "es" por defecto.
