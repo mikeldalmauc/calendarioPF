@@ -41,6 +41,12 @@ instance Show Dir where
         show (Calle s i) = s ++ " " ++ show i
         show (Casa s) = s 
 
+instance Eq Persona where 
+    (Per n1 a1) == (Per n2 a2) = a1 == a2 && n1 == n2
+    
+instance Ord Persona where
+    (Per n1 a1) <= (Per n2 a2) = a1 < a2 || (a1 == a2 && n1 <= n2)
+
 dirJon = (Per "Jon" "Legorburu", Calle "Str" 2, "Galdkao") 
 
 dirMiren = (Per "Jon" "Legorburu", Casa "casa", "Galdkao")
@@ -85,15 +91,15 @@ order (Nodo ai b ad) = map (tab ++) (order ad)
             where tab = "    "
                     
 -- Ejercicio 4
-data Arbin a = Hoja a | Unir (Arbin a) (Arbin a)
+data Arbin a = Hoja2 a | Unir (Arbin a) (Arbin a)
 
 maparbin :: (a -> b) -> Arbin a -> Arbin b
-maparbin f (Hoja x) = Hoja (f x)
+maparbin f (Hoja2 x) = Hoja2 (f x)
 maparbin f (Unir iz de) = Unir (maparbin f iz) (maparbin f de)
 
-aplanar :: Arbin a -> [a]
-aplanar (Hoja x) = [x]
-aplanar (Unir iz de) = aplanar iz ++ aplanar de
+aplanar2 :: Arbin a -> [a]
+aplanar2 (Hoja2 x) = [x]
+aplanar2 (Unir iz de) = aplanar2 iz ++ aplanar2 de
 
 
 --- Ejercicio Apuntes
@@ -143,16 +149,11 @@ meter x (Nod ai r ad) | x < r  = Nod (meter x ai) r ad
                       
 une :: Arbus a -> Arbus a -> Arbus a
 une Vac ad = ad
-une ai ad = let 
-                (m, ai') = maxSubArbus ai
-            in 
-                Nod ai' m ad
-        
+une ai ad = Nod ai' r ad 
+    where (r, ai') = borrarMayor ai
 
-maxSubArbus :: Arbus a -> (a ,Arbus a)
-maxSubArbus Vac = error "EL arbol no puede ser vacío"
-maxSubArbus (Nod ai r Vac) = (r, ai)
-maxSubArbus (Nod ai r ad)  =    let 
-                                    (rm, al) = maxSubArbus ad
-                                in
-                                    (rm, Nod ai r al)
+borrarMayor :: Arbus a -> (a ,Arbus a)
+borrarMayor (Nod ai r Vac) = (r, ai)
+borrarMayor (Nod ai r ad)  = (r', Nod ai r ad')
+    where (r', ad') = borrarMayor ad
+          
