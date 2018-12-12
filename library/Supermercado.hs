@@ -64,13 +64,9 @@ eliminar cod  (BD xs) =
 
 insertar :: Producto -> BaseDatos -> BaseDatos
 insertar Prod{..} (BD xs) = 
-
-    -- if codigo == undefined then 
-    --     -- let 
-    --     --     codigo = (1+) . 
-    --     -- in
-    --         BD (xs ++ [cambiarCodigo Prod{..} (codigo (last xs))]) 
-    -- else 
+    if codigo < 0 then 
+        BD (xs ++ [Prod{codigo = proximoCodigo xs,..}]) 
+    else 
         case posicion codigo xs of 
             Nothing -> BD xs -- TODO hace esto para que se inserte en una posicion concreta
             Just index  -> 
@@ -79,11 +75,9 @@ insertar Prod{..} (BD xs) =
                 in 
                     BD (as ++ Prod{..}:bs)
 
--- Esta a lo mejor hay que cambiar/borrar
-cambiarCodigo :: Producto -> Codigo -> Producto
-cambiarCodigo Prod{..} cod = Prod{codigo = cod,..}
-
 -- Funciones auxiliares sobre [Producto]:
+proximoCodigo :: [Producto] -> Codigo
+proximoCodigo = (+1) . codigo . last
 
 posicion :: Codigo -> [Producto] -> Maybe Int
 -- posicion codigo [Producto] = Si existe, devuelve la posición en la lista
@@ -102,7 +96,7 @@ posicion n xs
 imprimir :: BaseDatos -> IO()
 imprimir (BD l) = do
                     putStr "Cabecera \n"
-                    (putStr . concat . map (\p -> show p ++"\n")) l
+                    (putStr . concatMap (\p -> show p ++"\n")) l
                     
                 -- Visualizaci�n de la Base de Datos ordenada por Nombre de productos:
 

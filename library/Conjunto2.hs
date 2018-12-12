@@ -56,7 +56,7 @@ module Conjunto2 (Conj, vacio, simple, miembro, union,
     
     filterConj :: Ord a => (a->Bool) -> Conj a -> Conj a
     -- Devuelve el conjunto resultado de filtrar segun el predicado p
-    filterConj p (Co x) = hacerConj (filter p x)
+    filterConj p (Co x) = Co (filter p x)
     
     foldConj :: (a -> b -> b) -> b -> Conj a -> b
     -- Devuelve el valor de aplicar foldr al conjunto
