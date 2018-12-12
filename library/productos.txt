@@ -1,0 +1,21 @@
+1111
+Cervezas caja
+7.9
+1112
+Patatas bolsa
+1.4
+1233
+Zumo naranja
+1.5
+1455
+Tomates ensalada
+2.5
+2222
+Galletas Maria
+2.3
+3333
+Tomates rama
+2.9
+5643
+Detergente lavadora
+10.1
