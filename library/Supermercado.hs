@@ -22,7 +22,7 @@ type Precio = Float       --   Precio de un producto (2 decimales)
 data Producto = Prod {codigo ::Codigo, nombre ::Nombre, precio ::Precio}
 
 instance Show Producto where
-    show Prod {..} = show codigo ++ " " ++ nombre ++ " " ++ show precio 
+    show Prod {..} = show codigo ++ " " ++ nombre ++ " " ++ show precio
 
 newtype BaseDatos = BD [Producto]
 
@@ -55,12 +55,12 @@ eliminar :: Codigo -> BaseDatos -> BaseDatos
 --                   Si no hay tal codigo en bd da error
 eliminar cod  (BD xs) = 
         case posicion cod xs of 
-            Nothing -> error ("No existe ninún producto con el código: " ++ show cod)
+            Nothing     -> error ("No existe ninún producto con el código: " ++ show cod)
             Just index  -> 
                 let 
                     (as, _:bs) = splitAt index xs
                 in 
-                    BD (as ++ bs)
+                    BD (as ++ bs)         
 
 insertar :: Producto -> BaseDatos -> BaseDatos
 insertar Prod{..} (BD xs) = 
@@ -68,39 +68,59 @@ insertar Prod{..} (BD xs) =
         BD (xs ++ [Prod{codigo = proximoCodigo xs,..}]) 
     else 
         case posicion codigo xs of 
-            Nothing -> BD xs -- TODO hace esto para que se inserte en una posicion concreta
+            Nothing     -> BD (insertarOrdenado Prod{..} xs)
             Just index  -> 
                 let 
                     (as, _:bs) = splitAt index xs
                 in 
                     BD (as ++ Prod{..}:bs)
 
+
+
 -- Funciones auxiliares sobre [Producto]:
+
 proximoCodigo :: [Producto] -> Codigo
 proximoCodigo = (+1) . codigo . last
 
 posicion :: Codigo -> [Producto] -> Maybe Int
 -- posicion codigo [Producto] = Si existe, devuelve la posición en la lista
 -- del producto con dicho código
-posicion _ [] = Nothing
+posicion _ []       = Nothing
 posicion n xs 
     | codigo e == n = Just index
-    | codigo e < n = (+index) . (+1) <$> posicion n bs
-    | otherwise = posicion n as
-    where index = length xs `quot` 2
-          (as, e:bs) = splitAt index xs 
+    | codigo e < n  = (+index) . (+1) <$> posicion n bs
+    | otherwise     = posicion n as
+    where 
+        index       = length xs `quot` 2
+        (as, e:bs)  = splitAt index xs 
     
--- insertarOrdendo :: Codigo -> 
+insertarOrdenado :: Producto -> [Producto] -> [Producto]
+insertarOrdenado prod []        = [prod]
+insertarOrdenado prod (x:xs)    
+    | codigo prod <= codigo x   = prod : x : xs
+    | otherwise                 = x : insertarOrdenado prod xs
+
+
+ordenarPorNombre :: [Producto] -> [Producto]
+-- Dada una lista de productos, la ordena de menor a mayor dependiendo del nombre del producto
+ordenarPorNombre [] = []
+ordenarPorNombre (x:xs)  = ordenarPorNombre menor ++ [x] ++ ordenarPorNombre mayor
+    where 
+        menor   = [lis | lis <- xs, nombre x > nombre lis]
+        mayor   = [lis | lis <- xs, nombre x <= nombre lis]
+
+
 --  Visualizacion de la Base de Datos -----------------------
 
 imprimir :: BaseDatos -> IO()
+-- Visualización de la Base de Datos ordenada por Codigo de productos:
 imprimir (BD l) = do
-                    putStr "Cabecera \n"
-                    (putStr . concatMap (\p -> show p ++"\n")) l
-                    
-                -- Visualizaci�n de la Base de Datos ordenada por Nombre de productos:
+    putStr "Cabecera \n"
+    (putStr . concatMap (\p -> show p ++"\n")) l
 
--- imprimirPorNombre :: BaseDatos -> IO()
+imprimirPorNombre :: BaseDatos -> IO()
+-- Visualización de la Base de Datos ordenada por Nombre de productos:
+imprimirPorNombre (BD l) = imprimir (BD (ordenarPorNombre l))
 
 
 
