@@ -13,7 +13,7 @@ module Hoja6 where
     type Base = Double 
 
     newtype Circulo = Cir Radio
-    data TrianguloRect = Tri Base Altura -- Isosceles o equilatero
+    data TrianguloRect = Tri Base Altura
     data Cuadrilatero = Cuad Lado | Rect Base Altura
     
     instance FiguraPlana Circulo where
@@ -21,7 +21,7 @@ module Hoja6 where
         area (Cir r) = pi * r * r
 
     instance FiguraPlana TrianguloRect where
-        perimetro (Tri base altura) = 2.0 * sqrt (altura^2 +(base/2.0)^2) + base 
+        perimetro (Tri base altura) = sqrt (altura^2 +base^2) + base + altura
         area (Tri base altura) = base * altura / 2.0
 
     instance FiguraPlana Cuadrilatero where
