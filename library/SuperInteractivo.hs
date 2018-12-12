@@ -1,6 +1,6 @@
 ------------------------------------------------------------------------
--- Nombre(s) :
--- ¿Tratas los errores referentes a la clave del producto? 
+-- Nombre(s) : Mikel Dalmau y Julen Fernandino
+-- Â¿Tratas los errores referentes a la clave del producto? 
 ------------------------------------------------------------------------
 
 
@@ -9,7 +9,7 @@
 
 module SuperInteractivo where
 
--- Importación de modulos:
+-- ImportaciÃ³n de modulos:
 
 import Supermercado
 
@@ -22,13 +22,13 @@ type Orden = String
 --  Salvaguarda y recuperacion de la Base de datos   -------------------
 
 -- Funcion que guarda la Base de datos de un supermercado en un archivo.
--- Se espera que el archivo esté en el directorio desde el que hemos arrancado
+-- Se espera que el archivo estÃ¡ en el directorio desde el que hemos arrancado
 -- guardaBD :: BaseDatos -> Archivo -> IO ()
 
 
 
 -- Funcion que recupera la BD de un archivo.
--- Se espera que el archivo esté en el directorio desde el cual hemos arrancado,
+-- Se espera que el archivo estï¿½ en el directorio desde el cual hemos arrancado,
 -- y que su contenido haya sido formado por guardaBD.
 -- recuperaBD :: Archivo -> IO BaseDatos
 
@@ -69,12 +69,12 @@ menu = "Supermercado interactivo \n" ++
 
 
 -- Proceso principal:
--- Depende de una Base de Datos dada como parámetro.
+-- Depende de una Base de Datos dada como parï¿½metro.
 -- sesionCon :: BaseDatos -> IO()
 
 
 -- Proceso auxiliar:
--- Depende de una Base de datos y una orden dados como parámetros.
+-- Depende de una Base de datos y una orden dados como parï¿½metros.
 -- ejecutaCon :: BaseDatos -> Orden -> IO ()
 
 
