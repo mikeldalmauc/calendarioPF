@@ -3,9 +3,10 @@
 
 
 --  SUPERMERCADO         Programacion Funcional            curso 2018/19  --
-
-
 module Supermercado where
+
+import Data.List (sortOn)
+
 -- ( -- lista de exportacion con 
 --                       -- los tipos y funciones adecuadas
 --                      )
@@ -63,6 +64,7 @@ eliminar cod  (BD xs) =
                     BD (as ++ bs)
 
 insertar :: Producto -> BaseDatos -> BaseDatos
+--
 insertar Prod{..} (BD xs) = 
     if codigo < 0 then 
         BD (xs ++ [Prod{codigo = proximoCodigo xs,..}]) 
@@ -90,19 +92,28 @@ posicion n xs
     where index = length xs `quot` 2
           (as, e:bs) = splitAt index xs 
     
--- insertarOrdendo :: Codigo -> 
+
 --  Visualizacion de la Base de Datos -----------------------
 
 imprimir :: BaseDatos -> IO()
-imprimir (BD l) = do
+imprimir (BD l) =  do
                     putStr "Cabecera \n"
                     (putStr . concatMap (\p -> show p ++"\n")) l
+
                     
-                -- Visualizaci�n de la Base de Datos ordenada por Nombre de productos:
+-- Visualizaci�n de la Base de Datos ordenada por Nombre de productos:
 
--- imprimirPorNombre :: BaseDatos -> IO()
+imprimirPorNombre :: BaseDatos -> IO()
+imprimirPorNombre (BD l) = imprimir (BD (ordenarPorNombre l))
 
+imprimirPorPrecio :: BaseDatos -> IO()
+imprimirPorPrecio (BD l) = imprimir (BD (ordenarPorPrecio l))
 
+ordenarPorNombre :: [Producto] -> [Producto]
+ordenarPorNombre = sortOn nombre
+
+ordenarPorPrecio :: [Producto] -> [Producto]
+ordenarPorPrecio = sortOn precio
 
 
 
