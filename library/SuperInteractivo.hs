@@ -48,6 +48,11 @@ supermercado = do
                bd <- recuperaBD "productos.txt"
                sesionCon $! bd      -- probar tambien con sesionCon bd
 -}
+supermercado :: IO ()
+supermercado = do
+               putStrLn menu
+               bd <- miBD
+               sesionCon $! bd      -- probar tambien con sesionCon bd
 
 -- Texto del menu de ordenes.
 -- Aparece cuando se activa la Base de Datos (mediante supermercado)
@@ -70,11 +75,47 @@ menu = "Supermercado interactivo \n" ++
 
 -- Proceso principal:
 -- Depende de una Base de Datos dada como par�metro.
--- sesionCon :: BaseDatos -> IO()
+sesionCon :: BaseDatos -> IO()
+sesionCon bd = do
+        comando <- getLine
+        bd' <- ejecutaCon bd comando
+        sesionCon bd'
 
 
 -- Proceso auxiliar:
 -- Depende de una Base de datos y una orden dados como par�metros.
--- ejecutaCon :: BaseDatos -> Orden -> IO ()
-
-
+ejecutaCon :: BaseDatos -> Orden -> IO BaseDatos
+ejecutaCon bd comando =
+        case comando of
+            "ayuda" ->  do
+                            putStrLn menu
+                            return bd
+            "conPre" -> do 
+                            putStr "Codigo?"
+                            cod <- read <$> getLine
+                            print (consultarPrecio cod bd)
+                            return bd
+            "conNom" -> do 
+                            putStr "Codigo?"
+                            cod <- read <$> getLine
+                            print (consultarNombre cod bd)
+                            return bd
+            "camPre" -> do 
+                            putStr "Codigo?"
+                            cod <- read <$> getLine
+                            putStrLn ("Precio Actual: " ++ show (consultarPrecio cod bd))
+                            putStr "Nuevo Precio?"
+                            precio <- read <$> getLine
+                            return $! cambiarPrecio precio cod bd
+            "camNom" -> do 
+                            putStr "Codigo?"
+                            cod <- read <$> getLine
+                            putStrLn ("Nombre Actual: " ++ show (consultarNombre cod bd))
+                            putStr "Nuevo Nombre?"
+                            nombre <- getLine -- TODO corregir esto para que lea bien los strings
+                            return $! cambiarNombre nombre cod bd
+    
+            "fin"   -> fail "Sesion finalizada" -- Todo cambiar esto
+            _ -> do
+                    putStrLn "El comando introducido no exite, prueba 'ayuda' para ver los comando disponibles."
+                    return bd

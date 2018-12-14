@@ -3,7 +3,7 @@
 
 
 --  SUPERMERCADO         Programacion Funcional            curso 2018/19  --
-module Supermercado (BaseDatos, Producto, eliminar, insertar, cambiarNombre, cambiarPrecio, consultarNombre, consultarPrecio, imprimir, imprimirPorNombre, imprimirPorPrecio)  where
+module Supermercado (BaseDatos, Producto, miBD, eliminar, insertar, cambiarNombre, cambiarPrecio, consultarNombre, consultarPrecio, imprimir, imprimirPorNombre, imprimirPorPrecio)  where
 
 import Data.List (sortOn)
 
@@ -29,15 +29,15 @@ newtype BaseDatos = BD [Producto]
 
 
 --  Base de datos inicial para pruebas  ---------------------
-{-
-miBD :: BaseDatos
-miBD =  BD [Prod 1111 "Chupa Chups" 0.21,             
+
+miBD :: IO BaseDatos
+miBD = return (BD [Prod 1111 "Chupa Chups" 0.21,             
             Prod 1112 "Chupa Chups (bolsa gigante)" 1.33,
             Prod 1234 "Tio Pepe, 1lt" 5.40,
             Prod 3814 "Cacahuetes" 0.56,
             Prod 4719 "Fritos de maiz" 1.21,
-            Prod 5643 "Dodotis" 10.10] 
--}                          
+            Prod 5643 "Dodotis" 10.10] )
+                          
 -------------------------------------------------------------  
 
 -- Variables definidas para imprimir en el terminal de manera estructurada -----------------------
@@ -63,12 +63,12 @@ eliminar :: Codigo -> BaseDatos -> BaseDatos
 --                   Si no hay tal codigo en bd da error
 eliminar cod  (BD xs) = 
         case buscar cod xs of 
-            (Nothing,_)     -> error ("No existe ninún producto con el código: " ++ show cod)
-            (Just index,_)  -> 
+            (Just index,_) -> 
                 let 
                     (as, _:bs) = splitAt index xs
                 in 
                     BD (as ++ bs)    
+            (_,_) -> error ("No existe ninún producto con el código: " ++ show cod)
 
 
 insertar :: Producto -> BaseDatos -> BaseDatos
@@ -92,32 +92,36 @@ insertar Prod{..} (BD xs) =
 -- Funciones basicas sobre productos:
 
 cambiarNombre :: Nombre -> Codigo -> BaseDatos -> BaseDatos
--- cambiarNombre nom cod xs = la base de datos obtenida al cambiar
+-- cambiarNombre nom cod bd = la base de datos obtenida al cambiar
 --                          el nombre por nom del producto de código cod 
 --                          en la Base de datos xs.
---                          Si no hay tal codigo en xs da error
+--                          Si no existe el producto da error
 cambiarNombre nom cod (BD xs) =
     case buscar cod xs of
         (_,Just Prod{..}) -> insertar Prod{nombre=nom,..} (BD xs) 
         (_,_)     -> error ("No existe ningún producto con el código: " ++ show cod)
 
 cambiarPrecio :: Precio -> Codigo -> BaseDatos -> BaseDatos
--- cambiarPrecio pre cod xs = la base de datos obtenida al cambiar
+-- cambiarPrecio pre cod bd = la base de datos obtenida al cambiar
 --                          el precio por pre del producto de código cod 
---                          en la Base de datos xs.
---                          Si no hay tal codigo en xs da error
+--                          en la Base de datos bd.
+--                          Si no existe el producto da error
 cambiarPrecio pre cod (BD xs) =
     case buscar cod xs of
         (_,Just Prod{..}) -> insertar Prod{precio=pre,..} (BD xs) 
         (_,_)     -> error ("No existe ningún producto con el código: " ++ show cod)
 
 consultarNombre :: Codigo -> BaseDatos -> Nombre
+-- consultarNombre cod bd = el nombre del producto de código cod en la base de datos bd
+--                          Si no existe el producto da error
 consultarNombre cod (BD xs) =
     case buscar cod xs of
         (_,Just p) -> nombre p
         (_,_)     -> error ("No existe ningún producto con el código: " ++ show cod)
 
 consultarPrecio :: Codigo -> BaseDatos -> Precio
+-- consultarPrecio cod bd = el precio del producto de código cod en la base de datos bd
+--                          Si no existe el producto da error
 consultarPrecio cod (BD xs) =
     case buscar cod xs of
         (_,Just p) -> precio p
