@@ -23,7 +23,8 @@ type Orden = String
 
 -- Funcion que guarda la Base de datos de un supermercado en un archivo.
 -- Se espera que el archivo está en el directorio desde el que hemos arrancado
--- guardaBD :: BaseDatos -> Archivo -> IO ()
+guardaBD :: BaseDatos -> Archivo -> IO ()
+guardaBD bd arc = putStrLn "\nBase de datos guarda."
 
 
 
@@ -81,42 +82,45 @@ sesionCon bd = do
         putStr "\nOrden? "
         comando <- getLine
         bd' <- ejecutaCon bd comando
-        sesionCon bd'
+        case bd' of
+            Just bd''   -> sesionCon bd''
+            Nothing     -> guardaBD bd "prod.txt" -- TODO: usar el nombre del archivo adecuado
+            
 
 
 -- Proceso auxiliar:
 -- Depende de una Base de datos y una orden dados como par�metros.
-ejecutaCon :: BaseDatos -> Orden -> IO BaseDatos
+ejecutaCon :: BaseDatos -> Orden -> IO (Maybe BaseDatos)
 ejecutaCon bd comando =
     case comando of
 
         "ayuda" ->  do
             putStrLn menu
-            return bd
+            return (Just bd)
 
         "conPre" -> do 
             cod <- leerCodigoExistente bd
             print (consultarPrecio cod bd)
-            return bd
+            return (Just bd)
 
         "conNom" -> do 
             cod <- leerCodigoExistente bd
             print (consultarNombre cod bd)
-            return bd
+            return (Just bd)
 
         "camPre" -> do 
             cod <- leerCodigoExistente bd
             putStrLn ("Precio Actual: " ++ show (consultarPrecio cod bd))
             putStr "Nuevo Precio? "
             precio <- read <$> getLine
-            return $! cambiarPrecio precio cod bd
+            return $! (Just (cambiarPrecio precio cod bd))
 
         "camNom" -> do 
             cod <- leerCodigoExistente bd
             putStrLn ("Nombre Actual: " ++ show (consultarNombre cod bd))
             putStr "Nuevo Nombre? "
             nombre <- getLine
-            return $! cambiarNombre nombre cod bd
+            return $! (Just (cambiarNombre nombre cod bd))
 
         "metPro" -> do
             cod <- leerCodigoLibre bd
@@ -124,32 +128,32 @@ ejecutaCon bd comando =
             nom <- getLine
             putStr "Precio? "
             pre <- read <$> getLine
-            return (insertar (Prod cod nom pre) bd)
+            return (Just (insertar (Prod cod nom pre) bd))
 
         "eliPro" -> do
             cod <- leerCodigoExistente bd
-            return $! eliminar cod bd
+            return $! (Just (eliminar cod bd))
     
         "mosBD" -> do
             putStrLn "Base de datos actual:"
             imprimir bd
-            return bd
+            return (Just bd)
 
         "mosBDnombre" -> do
             putStrLn "Base de datos actual:"
             imprimirPorNombre bd
-            return bd
+            return (Just bd)
 
         "mosBDprecio" -> do
             putStrLn "Base de datos actual:"
             imprimirPorPrecio bd
-            return bd
+            return (Just bd)
 
-        "fin" -> fail "Sesion finalizada" -- Todo cambiar esto
+        "fin" -> return Nothing
 
         _ -> do
             putStrLn "El comando introducido no exite, prueba 'ayuda' para ver los comando disponibles."
-            return bd
+            return (Just bd)
 
 
 leerCodigoLibre :: BaseDatos -> IO Codigo
