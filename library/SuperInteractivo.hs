@@ -173,20 +173,3 @@ leerCodigoExistente bd = do
             leerCodigoExistente bd
         else do 
             return cod
-
-
-
-
-{- 
-leerCodigoExistente :: BaseDatos -> IO Codigo
-leerCodigoExistente bd = do
-    putStr "Codigo? "
-    cod <- read <$> getLine
-    if estaCodigo cod bd 
-        then 
-            return cod
-        else
-            putStrLn "El codigo no existe, introduce otro."
-            return cod
-            leerCodigoLibre bd
-             -}
