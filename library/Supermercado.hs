@@ -3,7 +3,7 @@
 
 
 --  SUPERMERCADO         Programacion Funcional            curso 2018/19  --
-module Supermercado (BaseDatos, Producto (..), Codigo, miBD, eliminar, insertar, cambiarNombre, cambiarPrecio, consultarNombre, consultarPrecio, estaCodigo, imprimir, imprimirPorNombre, imprimirPorPrecio)  where
+module Supermercado (BaseDatos (..), Producto (..), Codigo, Precio, miBD, eliminar, insertar, cambiarNombre, cambiarPrecio, consultarNombre, consultarPrecio, estaCodigo, imprimir, imprimirPorNombre, imprimirPorPrecio)  where
 
 import Data.List (sortOn)
 

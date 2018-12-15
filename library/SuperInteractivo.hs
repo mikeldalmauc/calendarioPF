@@ -24,15 +24,23 @@ type Orden = String
 -- Funcion que guarda la Base de datos de un supermercado en un archivo.
 -- Se espera que el archivo está en el directorio desde el que hemos arrancado
 guardaBD :: BaseDatos -> Archivo -> IO ()
-guardaBD bd arc = putStrLn "\nBase de datos guarda."
+guardaBD bd archivo = putStrLn "\nBase de datos guarda."
 
 
 
 -- Funcion que recupera la BD de un archivo.
--- Se espera que el archivo est� en el directorio desde el cual hemos arrancado,
+-- Se espera que el archivo está en el directorio desde el cual hemos arrancado,
 -- y que su contenido haya sido formado por guardaBD.
--- recuperaBD :: Archivo -> IO BaseDatos
+recuperaBD :: Archivo -> IO BaseDatos
+recuperaBD archivo = do                         -- ES LA UNICA MANERA QUE HE CONSEGUIDO QUE NO ME SALTARAN ERRORES.
+    file <- lines <$> readFile archivo
+    let bd = parseEntry [] file
+    return (BD bd)
 
+
+parseEntry :: [Producto] -> [String] -> [Producto]
+parseEntry bd (a:b:c:x) = parseEntry (bd ++ [Prod (read a :: Codigo) b (read c :: Precio)]) x
+parseEntry bd _        = bd
 
 
 --     Interaccion con el supermercado  ----------------------------------------
@@ -42,17 +50,11 @@ guardaBD bd arc = putStrLn "\nBase de datos guarda."
 -- en el archivo "productos.txt".
 -- Muestra el menu de opciones, recupera la Base de Datos, e inicia una sesion.
 
-{-
+
 supermercado :: IO ()
 supermercado = do
                putStrLn menu
                bd <- recuperaBD "productos.txt"
-               sesionCon $! bd      -- probar tambien con sesionCon bd
--}
-supermercado :: IO ()
-supermercado = do
-               putStrLn menu
-               bd <- miBD
                sesionCon $! bd      -- probar tambien con sesionCon bd
 
 -- Texto del menu de ordenes.
