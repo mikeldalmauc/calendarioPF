@@ -70,6 +70,7 @@ menu = "Supermercado interactivo \n" ++
        "  eliPro: elimina un producto \n" ++
        "  mosBD: muestra el contenido de la Base de datos  \n" ++
        "  mosBDnombre: muestra la BD ordenada por Nombre \n" ++
+       "  mosBDprecio: muestra la BD ordenada por Precio \n" ++
        "  fin: termina la sesion, guardando la Base de datos."
 
 
@@ -77,6 +78,7 @@ menu = "Supermercado interactivo \n" ++
 -- Depende de una Base de Datos dada como par�metro.
 sesionCon :: BaseDatos -> IO()
 sesionCon bd = do
+        putStr "\nOrden? "
         comando <- getLine
         bd' <- ejecutaCon bd comando
         sesionCon bd'
@@ -86,36 +88,105 @@ sesionCon bd = do
 -- Depende de una Base de datos y una orden dados como par�metros.
 ejecutaCon :: BaseDatos -> Orden -> IO BaseDatos
 ejecutaCon bd comando =
-        case comando of
-            "ayuda" ->  do
-                            putStrLn menu
-                            return bd
-            "conPre" -> do 
-                            putStr "Codigo?"
-                            cod <- read <$> getLine
-                            print (consultarPrecio cod bd)
-                            return bd
-            "conNom" -> do 
-                            putStr "Codigo?"
-                            cod <- read <$> getLine
-                            print (consultarNombre cod bd)
-                            return bd
-            "camPre" -> do 
-                            putStr "Codigo?"
-                            cod <- read <$> getLine
-                            putStrLn ("Precio Actual: " ++ show (consultarPrecio cod bd))
-                            putStr "Nuevo Precio?"
-                            precio <- read <$> getLine
-                            return $! cambiarPrecio precio cod bd
-            "camNom" -> do 
-                            putStr "Codigo?"
-                            cod <- read <$> getLine
-                            putStrLn ("Nombre Actual: " ++ show (consultarNombre cod bd))
-                            putStr "Nuevo Nombre?"
-                            nombre <- getLine -- TODO corregir esto para que lea bien los strings
-                            return $! cambiarNombre nombre cod bd
+    case comando of
+
+        "ayuda" ->  do
+            putStrLn menu
+            return bd
+
+        "conPre" -> do 
+            cod <- leerCodigoExistente bd
+            print (consultarPrecio cod bd)
+            return bd
+
+        "conNom" -> do 
+            cod <- leerCodigoExistente bd
+            print (consultarNombre cod bd)
+            return bd
+
+        "camPre" -> do 
+            cod <- leerCodigoExistente bd
+            putStrLn ("Precio Actual: " ++ show (consultarPrecio cod bd))
+            putStr "Nuevo Precio? "
+            precio <- read <$> getLine
+            return $! cambiarPrecio precio cod bd
+
+        "camNom" -> do 
+            cod <- leerCodigoExistente bd
+            putStrLn ("Nombre Actual: " ++ show (consultarNombre cod bd))
+            putStr "Nuevo Nombre? "
+            nombre <- getLine
+            return $! cambiarNombre nombre cod bd
+
+        "metPro" -> do
+            cod <- leerCodigoLibre bd
+            putStr "Nombre? "
+            nom <- getLine
+            putStr "Precio? "
+            pre <- read <$> getLine
+            return (insertar (Prod cod nom pre) bd)
+
+        "eliPro" -> do
+            cod <- leerCodigoExistente bd
+            return $! eliminar cod bd
     
-            "fin"   -> fail "Sesion finalizada" -- Todo cambiar esto
-            _ -> do
-                    putStrLn "El comando introducido no exite, prueba 'ayuda' para ver los comando disponibles."
-                    return bd
+        "mosBD" -> do
+            putStrLn "Base de datos actual:"
+            imprimir bd
+            return bd
+
+        "mosBDnombre" -> do
+            putStrLn "Base de datos actual:"
+            imprimirPorNombre bd
+            return bd
+
+        "mosBDprecio" -> do
+            putStrLn "Base de datos actual:"
+            imprimirPorPrecio bd
+            return bd
+
+        "fin" -> fail "Sesion finalizada" -- Todo cambiar esto
+
+        _ -> do
+            putStrLn "El comando introducido no exite, prueba 'ayuda' para ver los comando disponibles."
+            return bd
+
+
+leerCodigoLibre :: BaseDatos -> IO Codigo
+leerCodigoLibre bd = do
+    putStr "Codigo? "
+    cod <- read <$> getLine
+    if estaCodigo cod bd
+        then do 
+            putStrLn "El codigo esta repetido, introduzca otro." 
+            leerCodigoLibre bd
+        else do 
+            return cod
+
+leerCodigoExistente :: BaseDatos -> IO Codigo
+leerCodigoExistente bd = do
+    putStr "Codigo? "
+    cod <- read <$> getLine
+    if not (estaCodigo cod bd)
+        then do 
+            putStrLn "El codigo no existe, introduzca otro." 
+            leerCodigoExistente bd
+        else do 
+            return cod
+
+
+
+
+{- 
+leerCodigoExistente :: BaseDatos -> IO Codigo
+leerCodigoExistente bd = do
+    putStr "Codigo? "
+    cod <- read <$> getLine
+    if estaCodigo cod bd 
+        then 
+            return cod
+        else
+            putStrLn "El codigo no existe, introduce otro."
+            return cod
+            leerCodigoLibre bd
+             -}

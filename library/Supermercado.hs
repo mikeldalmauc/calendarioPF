@@ -3,7 +3,7 @@
 
 
 --  SUPERMERCADO         Programacion Funcional            curso 2018/19  --
-module Supermercado (BaseDatos, Producto, miBD, eliminar, insertar, cambiarNombre, cambiarPrecio, consultarNombre, consultarPrecio, imprimir, imprimirPorNombre, imprimirPorPrecio)  where
+module Supermercado (BaseDatos, Producto (..), Codigo, miBD, eliminar, insertar, cambiarNombre, cambiarPrecio, consultarNombre, consultarPrecio, estaCodigo, imprimir, imprimirPorNombre, imprimirPorPrecio)  where
 
 import Data.List (sortOn)
 
@@ -55,7 +55,11 @@ anchuraImprimir = 40
 
 -- Funciones principales sobre la BaseDatos
 
--- Un ejemplo es:
+estaCodigo :: Codigo -> BaseDatos -> Bool
+estaCodigo cod (BD xs) =
+    case buscar cod xs of
+        (Just index, _) -> True
+        (_,_)           -> False 
 
 eliminar :: Codigo -> BaseDatos -> BaseDatos
 -- eliminar cod bd = la base de datos obtenida al eliminar
