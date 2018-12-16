@@ -11,6 +11,8 @@ module SuperInteractivo where
 
 -- Importación de modulos:
 
+import Data.List (find,minimumBy)
+import Data.Ord (comparing)
 import Supermercado
 
 -- Otros tipos de datos
@@ -25,8 +27,6 @@ type Orden = String
 -- Se espera que el archivo está en el directorio desde el que hemos arrancado
 guardaBD :: BaseDatos -> Archivo -> IO ()
 guardaBD bd archivo = putStrLn "\nBase de datos guarda."
-
-
 
 -- Funcion que recupera la BD de un archivo.
 -- Se espera que el archivo está en el directorio desde el cual hemos arrancado,
@@ -54,34 +54,105 @@ parseEntry bd _        = bd
 supermercado :: IO ()
 supermercado = do
                putStrLn menu
-               bd <- recuperaBD "productos.txt"
+               bd <- recuperaBD "C:/Users/Mikel/Google Drive/Trayectoria Profesional/Grado en Ing Informática/Cuarto/PF/practicaCalendario-PF/calendar/library/productos.txt"
                sesionCon $! bd      -- probar tambien con sesionCon bd
 
--- Texto del menu de ordenes.
--- Aparece cuando se activa la Base de Datos (mediante supermercado)
--- y tambien al ejecutar la orden "ayuda".
+data Comando = Com {nombre ::String, descripcion ::String, funcion :: BaseDatos -> IO (Maybe BaseDatos)}
+
+instance Show Comando where
+        show Com{..} = nombre ++": " ++ descripcion
+
+comandos :: [Comando]
+comandos = [ Com "ayuda" "muestra esta ayuda" ayuda,
+        Com "conPre" "consulta el precio de un producto" conPre,
+        Com "conNom" "consulta el nombre de un producto" conNom,
+        Com "camPre" "cambia el precio de un producto" camPre,
+        Com "camNom" "cambia el nombre de un producto" camNom,
+        Com "metPro" "mete un nuevo producto" metPro,
+        Com "eliPro" "elimina un producto" eliPro,
+        Com "mosBD" "muestra el contenido de la Base de datos" mosBD,
+        Com "mosBDnombre" "muestra la BD ordenada por Nombre" mosBDnombre,
+        Com "mosBDprecio" "muestra la BD ordenada por Precio" mosBDprecio,
+        Com "fin" "termina la sesion, guardando la Base de datos" fin]
+
 
 menu :: String
-menu = "Supermercado interactivo \n" ++
-       "Ordenes disponibles: \n" ++
-       "  ayuda: muestra esta ayuda \n" ++
-       "  conPre: consulta el precio de un producto \n" ++
-       "  conNom: consulta el nombre de un producto \n" ++
-       "  camPre: cambia el precio de un producto \n" ++
-       "  camNom: cambia el nombre de un producto \n" ++
-       "  metPro: mete un nuevo producto \n" ++
-       "  eliPro: elimina un producto \n" ++
-       "  mosBD: muestra el contenido de la Base de datos  \n" ++
-       "  mosBDnombre: muestra la BD ordenada por Nombre \n" ++
-       "  mosBDprecio: muestra la BD ordenada por Precio \n" ++
-       "  fin: termina la sesion, guardando la Base de datos."
+menu = concatMap (\c -> show c ++"\n") comandos
+        
+ayuda :: BaseDatos -> IO (Maybe BaseDatos)
+ayuda bd =  do
+        putStrLn menu
+        return (Just bd)
+
+conPre :: BaseDatos -> IO (Maybe BaseDatos)
+conPre bd = do 
+        cod <- leerCodigoExistente bd
+        print (consultarPrecio cod bd)
+        return (Just bd)
+
+conNom :: BaseDatos -> IO (Maybe BaseDatos)
+conNom bd = do 
+        cod <- leerCodigoExistente bd
+        print (consultarNombre cod bd)
+        return (Just bd)
+
+camPre :: BaseDatos -> IO (Maybe BaseDatos)
+camPre bd = do 
+        cod <- leerCodigoExistente bd
+        putStrLn ("Precio Actual: " ++ show (consultarPrecio cod bd))
+        putStr "Nuevo Precio? "
+        precio <- read <$> getLine
+        return (Just (cambiarPrecio precio cod bd))
+
+camNom :: BaseDatos -> IO (Maybe BaseDatos)
+camNom bd = do 
+        cod <- leerCodigoExistente bd
+        putStrLn ("Nombre Actual: " ++ show (consultarNombre cod bd))
+        putStr "Nuevo Nombre? "
+        nombre <- getLine
+        return (Just (cambiarNombre nombre cod bd))
+
+metPro :: BaseDatos -> IO (Maybe BaseDatos)
+metPro bd = do
+        cod <- leerCodigoLibre bd
+        putStr "Nombre? "
+        nom <- getLine
+        putStr "Precio? "
+        pre <- read <$> getLine
+        return (Just (insertar (Prod cod nom pre) bd))
+
+eliPro :: BaseDatos -> IO (Maybe BaseDatos)
+eliPro bd = do
+        cod <- leerCodigoExistente bd
+        return (Just (eliminar cod bd))
+
+mosBD :: BaseDatos -> IO (Maybe BaseDatos)
+mosBD bd = do
+        putStrLn "Base de datos actual:"
+        imprimir bd
+        return (Just bd)
+
+mosBDnombre :: BaseDatos -> IO (Maybe BaseDatos)
+mosBDnombre bd = do
+        putStrLn "Base de datos actual:"
+        imprimirPorNombre bd
+        return (Just bd)
+
+mosBDprecio :: BaseDatos -> IO (Maybe BaseDatos)
+mosBDprecio bd = do
+        putStrLn "Base de datos actual:"
+        imprimirPorPrecio bd
+        return (Just bd)
+
+fin :: BaseDatos -> IO (Maybe BaseDatos)
+fin bd = return Nothing
 
 
 -- Proceso principal:
 -- Depende de una Base de Datos dada como par�metro.
 sesionCon :: BaseDatos -> IO()
 sesionCon bd = do
-        putStr "\nOrden? "
+        putStr "\nsupermercado> "
         comando <- getLine
         bd' <- ejecutaCon bd comando
         case bd' of
@@ -89,73 +160,12 @@ sesionCon bd = do
             Nothing     -> guardaBD bd "prod.txt" -- TODO: usar el nombre del archivo adecuado
             
 
-
--- Proceso auxiliar:
--- Depende de una Base de datos y una orden dados como par�metros.
 ejecutaCon :: BaseDatos -> Orden -> IO (Maybe BaseDatos)
-ejecutaCon bd comando =
-    case comando of
-
-        "ayuda" ->  do
-            putStrLn menu
-            return (Just bd)
-
-        "conPre" -> do 
-            cod <- leerCodigoExistente bd
-            print (consultarPrecio cod bd)
-            return (Just bd)
-
-        "conNom" -> do 
-            cod <- leerCodigoExistente bd
-            print (consultarNombre cod bd)
-            return (Just bd)
-
-        "camPre" -> do 
-            cod <- leerCodigoExistente bd
-            putStrLn ("Precio Actual: " ++ show (consultarPrecio cod bd))
-            putStr "Nuevo Precio? "
-            precio <- read <$> getLine
-            return $! (Just (cambiarPrecio precio cod bd))
-
-        "camNom" -> do 
-            cod <- leerCodigoExistente bd
-            putStrLn ("Nombre Actual: " ++ show (consultarNombre cod bd))
-            putStr "Nuevo Nombre? "
-            nombre <- getLine
-            return $! (Just (cambiarNombre nombre cod bd))
-
-        "metPro" -> do
-            cod <- leerCodigoLibre bd
-            putStr "Nombre? "
-            nom <- getLine
-            putStr "Precio? "
-            pre <- read <$> getLine
-            return (Just (insertar (Prod cod nom pre) bd))
-
-        "eliPro" -> do
-            cod <- leerCodigoExistente bd
-            return $! (Just (eliminar cod bd))
-    
-        "mosBD" -> do
-            putStrLn "Base de datos actual:"
-            imprimir bd
-            return (Just bd)
-
-        "mosBDnombre" -> do
-            putStrLn "Base de datos actual:"
-            imprimirPorNombre bd
-            return (Just bd)
-
-        "mosBDprecio" -> do
-            putStrLn "Base de datos actual:"
-            imprimirPorPrecio bd
-            return (Just bd)
-
-        "fin" -> return Nothing
-
-        _ -> do
-            putStrLn "El comando introducido no exite, prueba 'ayuda' para ver los comando disponibles."
-            return (Just bd)
+ejecutaCon bd orden = case find (\Com{..} -> nombre == orden) comandos of
+                        Just Com{..} -> funcion bd
+                        Nothing -> do
+                                putStrLn (sugerirComando orden ++ "El comando introducido no exite, prueba 'ayuda' para ver los comando disponibles.")
+                                return (Just bd)
 
 
 leerCodigoLibre :: BaseDatos -> IO Codigo
@@ -166,8 +176,7 @@ leerCodigoLibre bd = do
         then do 
             putStrLn "El codigo esta repetido, introduzca otro." 
             leerCodigoLibre bd
-        else do 
-            return cod
+        else return cod
 
 leerCodigoExistente :: BaseDatos -> IO Codigo
 leerCodigoExistente bd = do
@@ -177,5 +186,25 @@ leerCodigoExistente bd = do
         then do 
             putStrLn "El codigo no existe, introduzca otro." 
             leerCodigoExistente bd
-        else do 
-            return cod
+        else return cod
+
+
+-----------------------------------------------------------------------------------------------------------------------
+--- Funciones auxiliares
+-----------------------------------------------------------------------------------------------------------------------
+
+sugerirComando :: String -> String
+sugerirComando s = elegirMinimo(zip (map (\Com{..} -> hammingDistance s nombre) comandos) comandos)
+
+elegirMinimo :: [(Int, Comando)] -> String
+elegirMinimo l = if val > 3 then "" else "Tal vez quisiste decir " ++ SuperInteractivo.nombre com ++ "\n"
+        where (val, com) = minimumBy (comparing fst) l
+
+hammingDistance :: Eq a => [a] -> [a] -> Int
+-- Defina la diferencia entre dos strings
+hammingDistance (x:xs) (y:ys) | x /= y = tl + 1
+                              | otherwise = tl
+    where tl = hammingDistance xs ys
+hammingDistance x [] = length x
+hammingDistance [] y = length y
+hammingDistance [] [] = 0

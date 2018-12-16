@@ -13,3 +13,5 @@ seguro p n = and [not (mata (i,j)(k,n)) | (i,j) <- zip [1..h] p ]
 
 mata :: (Int, Int) -> (Int, Int) -> Bool
 mata (i,j) (i', j') = (j == j') || (i == i') || (i+j == i'+j') || (i-j == i'-j')
+
+
