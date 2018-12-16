@@ -3,7 +3,7 @@
 
 
 --  SUPERMERCADO         Programacion Funcional            curso 2018/19  --
-module Supermercado (BaseDatos (..), Producto (..), Codigo, Precio, miBD, eliminar, insertar, cambiarNombre, cambiarPrecio, consultarNombre, consultarPrecio, estaCodigo, imprimir, imprimirPorNombre, imprimirPorPrecio)  where
+module Supermercado (BaseDatos (..), Producto (..), Codigo, Precio, eliminar, insertar, cambiarNombre, cambiarPrecio, consultarNombre, consultarPrecio, imprimir, imprimirPorNombre, imprimirPorPrecio)  where
 
 import Data.List (sortOn)
 
@@ -25,22 +25,9 @@ instance Show Producto where
 
 newtype BaseDatos = BD [Producto]
 
--- los productos de la base de datos deben estar en orden creciente por codigo
-
-
---  Base de datos inicial para pruebas  ---------------------
-
-miBD :: IO BaseDatos
-miBD = return (BD [Prod 1111 "Chupa Chups" 0.21,             
-            Prod 1112 "Chupa Chups (bolsa gigante)" 1.33,
-            Prod 1234 "Tio Pepe, 1lt" 5.40,
-            Prod 3814 "Cacahuetes" 0.56,
-            Prod 4719 "Fritos de maiz" 1.21,
-            Prod 5643 "Dodotis" 10.10] )
-                          
--------------------------------------------------------------  
-
--- Variables definidas para imprimir en el terminal de manera estructurada -----------------------
+--------------------------------------------------------------------------------------
+-- Variables definidas para imprimir en el terminal de manera estructurada
+--------------------------------------------------------------------------------------
 
 anchuraImprimirCod :: Int
 -- Variable que alberga la anchura de la columna donde se imprime el código
@@ -50,16 +37,9 @@ anchuraImprimir :: Int
 -- Variable que alberga la anchura de la columna donde se imprime el resto de la información
 anchuraImprimir = 40
 
-------------------------------------------------------------- ------------------------------------  
-
-
+--------------------------------------------------------------------------------------
 -- Funciones principales sobre la BaseDatos
-
-estaCodigo :: Codigo -> BaseDatos -> Bool
-estaCodigo cod (BD xs) =
-    case buscar cod xs of
-        (Just index, _) -> True
-        (_,_)           -> False 
+--------------------------------------------------------------------------------------
 
 eliminar :: Codigo -> BaseDatos -> BaseDatos
 -- eliminar cod bd = la base de datos obtenida al eliminar
@@ -72,7 +52,7 @@ eliminar cod  (BD xs) =
                     (as, _:bs) = splitAt index xs
                 in 
                     BD (as ++ bs)    
-            (_,_) -> error ("No existe ninún producto con el código: " ++ show cod)
+            (_,_) -> error ("No existe ningun producto con el codigo: " ++ show cod ++ "#")
 
 
 insertar :: Producto -> BaseDatos -> BaseDatos
@@ -92,8 +72,9 @@ insertar Prod{..} (BD xs) =
                 in 
                     BD (as ++ Prod{..}:bs)
 
-
+--------------------------------------------------------------------------------------
 -- Funciones basicas sobre productos:
+--------------------------------------------------------------------------------------
 
 cambiarNombre :: Nombre -> Codigo -> BaseDatos -> BaseDatos
 -- cambiarNombre nom cod bd = la base de datos obtenida al cambiar
@@ -103,7 +84,7 @@ cambiarNombre :: Nombre -> Codigo -> BaseDatos -> BaseDatos
 cambiarNombre nom cod (BD xs) =
     case buscar cod xs of
         (_,Just Prod{..}) -> insertar Prod{nombre=nom,..} (BD xs) 
-        (_,_)     -> error ("No existe ningún producto con el código: " ++ show cod)
+        (_,_)     -> error ("No existe ningun producto con el codigo: " ++ show cod ++ "#")
 
 cambiarPrecio :: Precio -> Codigo -> BaseDatos -> BaseDatos
 -- cambiarPrecio pre cod bd = la base de datos obtenida al cambiar
@@ -113,7 +94,7 @@ cambiarPrecio :: Precio -> Codigo -> BaseDatos -> BaseDatos
 cambiarPrecio pre cod (BD xs) =
     case buscar cod xs of
         (_,Just Prod{..}) -> insertar Prod{precio=pre,..} (BD xs) 
-        (_,_)     -> error ("No existe ningún producto con el código: " ++ show cod)
+        (_,_)     -> error ("No existe ningun producto con el codigo: " ++ show cod ++ "#")
 
 consultarNombre :: Codigo -> BaseDatos -> Nombre
 -- consultarNombre cod bd = el nombre del producto de código cod en la base de datos bd
@@ -121,7 +102,7 @@ consultarNombre :: Codigo -> BaseDatos -> Nombre
 consultarNombre cod (BD xs) =
     case buscar cod xs of
         (_,Just p) -> nombre p
-        (_,_)     -> error ("No existe ningún producto con el código: " ++ show cod)
+        (_,_)     -> error ("No existe ningun producto con el codigo: " ++ show cod ++ "#")
 
 consultarPrecio :: Codigo -> BaseDatos -> Precio
 -- consultarPrecio cod bd = el precio del producto de código cod en la base de datos bd
@@ -129,11 +110,11 @@ consultarPrecio :: Codigo -> BaseDatos -> Precio
 consultarPrecio cod (BD xs) =
     case buscar cod xs of
         (_,Just p) -> precio p
-        (_,_)     -> error ("No existe ningún producto con el código: " ++ show cod)
---------------------------------------------------------------------------------------
-        
+        (_,_)     -> error ("No existe ningun producto con el codigo: " ++ show cod ++ "#")
 
+--------------------------------------------------------------------------------------
 -- Funciones auxiliares sobre [Producto]:
+--------------------------------------------------------------------------------------
 
 proximoCodigo :: [Producto] -> Codigo
 -- devuelve un código de producto resultante de sumarle 1 al
@@ -155,9 +136,6 @@ buscar n xs
         index       = length xs `quot` 2
         (as, e:bs)  = splitAt index xs 
     
-
--- buscar :: Codigo -> [Producto]
-
 insertarOrdenado :: Producto -> [Producto] -> [Producto]
 -- insertarOrdenado prod (x:xs) = lista de productos obtenida al insertar
 --                              el producto prod en la lista (x:xs) de manera ordenada
@@ -178,6 +156,10 @@ ordenarPorNombre (x:xs)  = ordenarPorNombre menor ++ [x] ++ ordenarPorNombre may
 ordenarPorPrecio :: [Producto] -> [Producto]
 ordenarPorPrecio = sortOn precio
 
+--------------------------------------------------------------------------------------
+--  Visualizaciones de la Base de Datos
+--------------------------------------------------------------------------------------
+
 -- Visualización de la Base de Datos ordenada por Codigo de productos:
 imprimir :: BaseDatos -> IO()
 imprimir (BD l) = do
@@ -196,7 +178,7 @@ imprimirPorNombre :: BaseDatos -> IO()
 imprimirPorNombre (BD l) = imprimir (BD (ordenarPorNombre l))
 
 imprimirPorPrecio :: BaseDatos -> IO()
---  Visualizacion de la Base de Datos -----------------------
+-- Visualización de la Base de Datos ordenada por precio de productos:
 imprimirPorPrecio (BD l) = imprimir (BD (ordenarPorPrecio l))
 
 lineaPuntos :: Int -> String
@@ -206,7 +188,3 @@ lineaPuntos n = replicate n '.'
 lineaBlancos :: Int -> String
 -- devuelve un string con n número de espacios blancos
 lineaBlancos n = replicate n ' '
-
-
-
-
