@@ -9,7 +9,6 @@ module SuperInteractivo where
 
 -- Importación de modulos:
 
-import System.Directory (getCurrentDirectory, listDirectory, findFiles)
 import Data.List (find,minimumBy,sortOn)
 import Data.Ord (comparing)
 import Text.Read
@@ -65,12 +64,8 @@ parseEntry bd (a:b:c:xs) = parseEntry (bd ++ [Prod (read a :: Codigo) b (read c 
 parseEntry bd _        = bd
 
 bucarRuta :: IO FilePath
--- La siguiente función intenta buscar en el directorio actual y en sus subdirectorios por el archivo productos.txt
-bucarRuta = do
-                path <- getCurrentDirectory
-                pathList <- listDirectory path
-                files <- findFiles (path:pathList) "productos.txt"
-                return (head files)
+bucarRuta = return "library.txt"
+
 
 -----------------------------------------------------------------------------------------------------------------------
 --- Interaccion con el supermercado
