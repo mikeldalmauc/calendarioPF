@@ -26,7 +26,7 @@ data Modelo = Model {bd ::BaseDatos, pathBD ::FilePath , cerrar::Bool}
 initModel :: IO Modelo
 -- Inicializa el modelo de datos con la base de datos y el path
 initModel = do
-            path <- defaultPathBD
+            path <- bucarRuta
             bd <- recuperaBD path
             return $! Model bd path False
 
@@ -64,9 +64,9 @@ parseEntry :: [Producto] -> [String] -> [Producto]
 parseEntry bd (a:b:c:xs) = parseEntry (bd ++ [Prod (read a :: Codigo) b (read c :: Precio)]) xs
 parseEntry bd _        = bd
 
-defaultPathBD :: IO FilePath
+bucarRuta :: IO FilePath
 -- La siguiente función intenta buscar en el directorio actual y en sus subdirectorios por el archivo productos.txt
-defaultPathBD = do
+bucarRuta = do
                 path <- getCurrentDirectory
                 pathList <- listDirectory path
                 files <- findFiles (path:pathList) "productos.txt"
