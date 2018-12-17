@@ -11,10 +11,10 @@ module SuperInteractivo where
 
 -- Importación de modulos:
 
-import Data.List (find,minimumBy)
+import System.Directory (getCurrentDirectory, listDirectory, findFiles)
+import Data.List (find,minimumBy,sortOn)
 import Data.Ord (comparing)
 import Text.Read
-import Prelude hiding (catch)
 import Control.Exception
 import Supermercado
 
@@ -23,8 +23,22 @@ import Supermercado
 type Archivo = String
 type Orden = String
 
-pathBD :: FilePath
-pathBD = "C:/Users/Mikel/Google Drive/Trayectoria Profesional/Grado en Ing Informática/Cuarto/PF/practicaCalendario-PF/calendar/library/productos.txt"
+defaultPathBD :: IO FilePath
+-- La siguiente función intenta buscar en el directorio actual y en sus subdirectorios por el archivo productos.txt
+defaultPathBD = do
+                path <- getCurrentDirectory
+                pathList <- listDirectory path
+                files <- findFiles (path:pathList) "productos.txt"
+                return (head files)
+
+data Modelo = Model {bd ::BaseDatos, pathBD ::FilePath , cerrar::Bool}
+
+initModel :: IO Modelo
+-- Inicializa el modelo de datos con la base de datos y el path
+initModel = do
+            path <- defaultPathBD
+            bd <- recuperaBD path
+            return $! Model bd path False
 
 -----------------------------------------------------------------------------------------------------------------------
 --  Salvaguarda y recuperacion de la Base de datos  
@@ -33,20 +47,30 @@ pathBD = "C:/Users/Mikel/Google Drive/Trayectoria Profesional/Grado en Ing Infor
 -- Funcion que guarda la Base de datos de un supermercado en un archivo.
 -- Se espera que el archivo está en el directorio desde el que hemos arrancado
 guardaBD :: BaseDatos -> Archivo -> IO ()
-guardaBD bd archivo = putStrLn "\nBase de datos guarda."
-
+guardaBD (BD xs) archivo = do
+            writeFile archivo (unlines (concatMap (\Prod{..} -> [show codigo, nombre, show precio]) (sortOn codigo xs)))
+            putStrLn "\nBase de datos guardada."
+            
 -- Funcion que recupera la BD de un archivo.
 -- Se espera que el archivo está en el directorio desde el cual hemos arrancado,
 -- y que su contenido haya sido formado por guardaBD.
 recuperaBD :: Archivo -> IO BaseDatos
-recuperaBD archivo = do                         -- ES LA UNICA MANERA QUE HE CONSEGUIDO QUE NO ME SALTARAN ERRORES.
-    file <- lines <$> readFile archivo
-    let bd = parseEntry [] file
-    return (BD bd)
-
+recuperaBD archivo = catch (do                         
+                            file <- lines <$> readFile archivo
+                            let bd = parseEntry [] file
+                            return (BD bd)) handler
+            where
+                handler :: SomeException -> IO BaseDatos
+                handler ex = do
+                                putStrLn "Ha ocurrido un error al leer la base de datos"
+                                print ex
+                                putStrLn "\n\n Se ha iniciado el programa con una base de datos de pruebas."
+                                putStrLn "Para cambiar la ruta o leer la base de datos otra vez usar el comando config"
+                                bd' <- defaultBD
+                                return $! bd'
 
 parseEntry :: [Producto] -> [String] -> [Producto]
-parseEntry bd (a:b:c:x) = parseEntry (bd ++ [Prod (read a :: Codigo) b (read c :: Precio)]) x
+parseEntry bd (a:b:c:xs) = parseEntry (bd ++ [Prod (read a :: Codigo) b (read c :: Precio)]) xs
 parseEntry bd _        = bd
 
 -----------------------------------------------------------------------------------------------------------------------
@@ -59,142 +83,165 @@ parseEntry bd _        = bd
 -- Muestra el menu de opciones, recupera la Base de Datos, e inicia una sesion.
 supermercado :: IO ()
 supermercado = do
-               putStrLn bienvenida
-               putStrLn menu
-               bd <- recuperaBD pathBD
-               sesionCon $! bd
+            putStrLn bienvenida
+            putStrLn menu
+            m <- initModel
+            sesionCon $! m
 
 -----------------------------------------------------------------------------------------------------------------------
 --- Proceso principal
 -----------------------------------------------------------------------------------------------------------------------
 
-sesionCon :: BaseDatos -> IO()
+sesionCon :: Modelo -> IO()
 -- El proceso principal se llama recursivamente, y consiste en la lectura y ejecución de un comando
 -- en cada llamada. Con cada ejecución de un comando se obtiene una base de datos actualizada y se utiliza
 -- para la siguiente llamada. En caso contrario, se guarda la base de datos y se termina sesión.
-sesionCon bd =  do
+sesionCon Model{..} =  do
                 putStr "\nsupermercado> "
                 comando <- getLine
-                res <- ejecutaCon bd comando
-                case res of
-                    Just bd'   -> sesionCon bd'
-                    Nothing    -> guardaBD bd pathBD
-            
+                m <- ejecutaCon Model{..} comando
+                case m of
+                    Just Model{cerrar = True,..} ->  guardaBD bd pathBD 
+                    Just Model{..} -> sesionCon Model{..}
+                    Nothing -> sesionCon Model{..}
 
-ejecutaCon :: BaseDatos -> Orden -> IO (Maybe BaseDatos)
--- ejecutaCon bd orden = devuelve la base de datos resultante de ejecutar el comando indicado por 'orden' 
--- en caso de no existir se devuelve la base de datos original.
+ejecutaCon :: Modelo -> Orden -> IO (Maybe Modelo)
+-- ejecutaCon m orden = devuelve el modelo de datos resultante de ejecutar el comando indicado por 'orden' 
+-- en caso de no existir se devuelve el modelo de datos original.
 --      
---      Esta función captura cualquier excepción posible y la trata mostrando su mensaje y conservando la base de 
+--      Esta función captura cualquier excepción posible y la trata mostrando su mensaje y conservando el modelo de 
 --      datos original.
 -- 
-ejecutaCon bd orden = catch 
+ejecutaCon m orden = catch 
                         (case find (\Com{..} -> nombre == orden) comandos of
-                                Just Com{..} -> if nombre == "fin" then 
-                                                    return Nothing 
-                                                else return <$> funcion bd
+                                Just Com{..} -> return <$> funcion m
                                 Nothing ->  do
                                             putStrLn (sugerirComando orden ++ "El comando introducido no exite, prueba 'ayuda' para ver los comando disponibles.")
-                                            return (Just bd) 
+                                            return (Just m)
                         ) handler
                     where
-                        handler :: SomeException -> IO (Maybe BaseDatos)
+                        handler :: SomeException -> IO (Maybe Modelo)
                         handler ex = do
-                                    putStrLn (takeWhile (/= '#') (show ex))
-                                    return (Just bd)
+                                        putStrLn (takeWhile (/= '#') (show ex))
+                                        return (Just m)
 
 -----------------------------------------------------------------------------------------------------------------------
 --- Comandos del usuario
 -----------------------------------------------------------------------------------------------------------------------
 
-data Comando = Com {nombre ::String, descripcion ::String, funcion :: BaseDatos -> IO BaseDatos}
+data Comando = Com {nombre ::String, descripcion ::String, funcion :: Modelo -> IO Modelo}
 
 comandos :: [Comando]
-comandos = [    Com "ayuda" "muestra esta ayuda" ayuda,
-                Com "conPre" "consulta el precio de un producto" conPre,
-                Com "conNom" "consulta el nombre de un producto" conNom,
-                Com "camPre" "cambia el precio de un producto" camPre,
-                Com "camNom" "cambia el nombre de un producto" camNom,
-                Com "metPro" "mete un nuevo producto" metPro,
-                Com "eliPro" "elimina un producto" eliPro,
-                Com "mosBD" "muestra el contenido de la Base de datos" mosBD,
-                Com "mosBDnombre" "muestra la BD ordenada por Nombre" mosBDnombre,
-                Com "mosBDprecio" "muestra la BD ordenada por Precio" mosBDprecio,
-                Com "fin" "termina la sesion, guardando la Base de datos" fin]
+comandos = [Com "ayuda" "muestra esta ayuda" ayuda,
+            Com "conPre" "consulta el precio de un producto" conPre,
+            Com "conNom" "consulta el nombre de un producto" conNom,
+            Com "camPre" "cambia el precio de un producto" camPre,
+            Com "camNom" "cambia el nombre de un producto" camNom,
+            Com "metPro" "mete un nuevo producto" metPro,
+            Com "eliPro" "elimina un producto" eliPro,
+            Com "mosBD" "muestra el contenido de la Base de datos" mosBD,
+            Com "mosBDnombre" "muestra la BD ordenada por Nombre" mosBDnombre,
+            Com "mosBDprecio" "muestra la BD ordenada por Precio" mosBDprecio,
+            Com "config" "muestra el menu de configuracion" config,
+            Com "fin" "termina la sesion, guardando la Base de datos" fin]
 
-ayuda :: BaseDatos -> IO BaseDatos
-ayuda bd =  do
+ayuda :: Modelo -> IO Modelo
+ayuda m =  do
             putStrLn menu
-            return bd
+            return m
 
-conPre :: BaseDatos -> IO BaseDatos
-conPre bd = do
+conPre :: Modelo -> IO Modelo
+conPre Model{..} = do
             putStr "Codigo? "
             cod <- leerNumero
             print (consultarPrecio cod bd)
-            return bd
+            return Model{..}
 
-conNom :: BaseDatos -> IO BaseDatos
-conNom bd = do
+conNom :: Modelo -> IO Modelo
+conNom Model{..} = do
             putStr "Codigo? "
             cod <- leerNumero
             print (consultarNombre cod bd)
-            return bd
+            return Model{..}
 
-camPre :: BaseDatos -> IO BaseDatos
-camPre bd = do 
+camPre :: Modelo -> IO Modelo
+camPre Model{..} = do 
             putStr "Codigo? "
             cod <- leerNumero
             putStrLn (("Precio Actual: " ++ ) `seq` show (consultarPrecio cod bd))
             putStr "Nuevo Precio? "
             pre <- leerFloat
-            return (cambiarPrecio pre cod bd)
+            return Model{bd = cambiarPrecio pre cod bd, ..}
 
-camNom :: BaseDatos -> IO BaseDatos
-camNom bd = do 
+camNom :: Modelo -> IO Modelo
+camNom Model{..} = do 
             putStr "Codigo? "
             cod <- leerNumero
             putStrLn (("Nombre Actual: " ++) `seq` show (consultarNombre cod bd))
             putStr "Nuevo Nombre? "
             nombre <- getLine
-            return (cambiarNombre nombre cod bd)
+            return Model{bd = cambiarNombre nombre cod bd, ..}
 
-metPro :: BaseDatos -> IO BaseDatos
-metPro bd = do 
+metPro :: Modelo -> IO Modelo
+metPro Model{..} = do 
             putStr "Codigo? "
             cod <- leerNumero
             putStr "Nombre? "
             nom <- getLine
             putStr "Precio? "
             pre <- leerFloat
-            return (insertar (Prod cod nom pre) bd)
+            return Model{bd = insertar (Prod cod nom pre) bd, ..}
 
-eliPro :: BaseDatos -> IO BaseDatos
-eliPro bd =  do 
+eliPro :: Modelo -> IO Modelo
+eliPro Model{..} = do 
             putStr "Codigo? "
             cod <- leerNumero
-            return (eliminar cod bd)
+            return Model{bd = eliminar cod bd, ..}
 
-mosBD :: BaseDatos -> IO BaseDatos
-mosBD bd = do
-        putStrLn "Base de datos actual:"
-        imprimir bd
-        return bd
+mosBD :: Modelo -> IO Modelo
+mosBD Model{..} =  do
+            putStrLn "Base de datos actual:"
+            imprimir bd
+            return Model{..}
 
-mosBDnombre :: BaseDatos -> IO BaseDatos
-mosBDnombre bd = do
-        putStrLn "Base de datos actual:"
-        imprimirPorNombre bd
-        return bd
+mosBDnombre :: Modelo -> IO Modelo
+mosBDnombre Model{..} = do
+            putStrLn "Base de datos actual:"
+            imprimirPorNombre bd
+            return Model{..}
 
-mosBDprecio :: BaseDatos -> IO BaseDatos
-mosBDprecio bd = do
-        putStrLn "Base de datos actual:"
-        imprimirPorPrecio bd
-        return bd
+mosBDprecio :: Modelo -> IO Modelo
+mosBDprecio Model{..} = do
+            putStrLn "Base de datos actual:"
+            imprimirPorPrecio bd
+            return Model{..}
 
-fin :: BaseDatos -> IO BaseDatos
-fin = return 
+config :: Modelo -> IO Modelo
+-- Abre un pequeño menu para otro tipo de acciones
+config Model{..} = do 
+            putStrLn "Menu de configuración"
+            putStrLn "1 - Leer Base de Datos"
+            putStrLn "2 - Escribir Base Datos"
+            putStrLn "3 - Cambiar Ruta de la Base Datos"
+            putStrLn "_ - Volver"
+            opt <- getLine
+            case opt of 
+                "1" ->  do
+                        bd' <- recuperaBD pathBD
+                        return Model{bd = bd',..}
+                "2" ->  do
+                        guardaBD bd pathBD 
+                        return Model{..}
+                "3" ->  do 
+                        putStrLn ("Ruta actual de la Base de Datos : " ++ pathBD)
+                        putStrLn "Nueva Ruta : "
+                        pathBD' <- getLine
+                        bd' <- recuperaBD pathBD' 
+                        return Model{bd = bd', pathBD = pathBD',..}
+                _  -> return Model{..}
+
+fin :: Modelo -> IO Modelo
+fin Model{..} = return Model{cerrar = True,..}
 
 -----------------------------------------------------------------------------------------------------------------------
 --- Funciones auxiliares
@@ -208,8 +255,8 @@ sugerirComando :: String -> String
 sugerirComando s = elegirMinimo(zip (map (\Com{..} -> hammingDistance s nombre) comandos) comandos)
 
 elegirMinimo :: [(Int, Comando)] -> String
--- elegirMinimo (a,b) = nombre del comando de menor a o el string vacío si no existe a <= 3
-elegirMinimo l = if val > 3 then "" else "Tal vez quisiste decir " ++ SuperInteractivo.nombre com ++ "\n"
+-- elegirMinimo (a,b) = nombre del comando de menor a o el string vacío si no existe a <= 2
+elegirMinimo l = if val > 2 then "" else "Tal vez quisiste decir " ++ SuperInteractivo.nombre com ++ "\n"
         where (val, com) = minimumBy (comparing fst) l
 
 hammingDistance :: Eq a => [a] -> [a] -> Int
@@ -223,26 +270,26 @@ hammingDistance [] y = length y
 leerNumero :: IO Int
 -- Lee un entero de la consolo o lanza un error si no es un número
 leerNumero = do 
-                cod <- readMaybe <$> getLine
-                case cod of
-                    Nothing -> error "El valor introducido tiene que ser un numero valido.#"
-                    Just val -> return val
+            cod <- readMaybe <$> getLine
+            case cod of
+                Nothing -> error "El valor introducido tiene que ser un numero valido.#"
+                Just val -> return val
 
 leerFloat :: IO Float
 -- Lee un float de la consolo o lanza un error si no es un número
 leerFloat = do 
-                cod <- readMaybe <$> getLine
-                case cod of
-                    Nothing -> error "El valor introducido tiene que ser un numero valido.#"
-                    Just val -> return val
+            cod <- readMaybe <$> getLine
+            case cod of
+                Nothing -> error "El valor introducido tiene que ser un numero valido.#"
+                Just val -> return val
 
 bienvenida :: String
-bienvenida =  unlines [" _______   __                                                    __        __           "
-                ,"|       \\ |  \\                                                  |  \\      |  \\          "
-               ,"| $$$$$$$\\ \\$$  ______   _______  __     __   ______   _______   \\$$  ____| $$  ______  "
-                ,"| $$__/ $$|  \\ /      \\ |       \\|  \\   /  \\ /      \\ |       \\ |  \\ /      $$ /     \\ "
-                ,"| $$    $$| $$|  $$$$$$\\| $$$$$$$\\\\$$\\ /  $$|  $$$$$$\\| $$$$$$$\\| $$|  $$$$$$$|  $$$$$$\\"
-                ,"| $$$$$$$\\| $$| $$    $$| $$  | $$ \\$$\\  $$ | $$    $$| $$  | $$| $$| $$  | $$| $$  | $$"
-                ,"| $$__/ $$| $$| $$$$$$$$| $$  | $$  \\$$ $$  | $$$$$$$$| $$  | $$| $$| $$__| $$| $$__/ $$"
-                ,"| $$    $$| $$ \\$$     \\| $$  | $$   \\$$$    \\$$     \\| $$  | $$| $$ \\$$    $$ \\$$    $$"
-                ," \\$$$$$$$  \\$$  \\$$$$$$$ \\$$   \\$$    \\$      \\$$$$$$$ \\$$   \\$$ \\$$  \\$$$$$$$  \\$$$$$$ "]
+bienvenida =  unlines [ " _______   __                                                    __        __           "
+                        ,"|       \\ |  \\                                                  |  \\      |  \\          "
+                        ,"| $$$$$$$\\ \\$$  ______   _______  __     __   ______   _______   \\$$  ____| $$  ______  "
+                        ,"| $$__/ $$|  \\ /      \\ |       \\|  \\   /  \\ /      \\ |       \\ |  \\ /      $$ /     \\ "
+                        ,"| $$    $$| $$|  $$$$$$\\| $$$$$$$\\\\$$\\ /  $$|  $$$$$$\\| $$$$$$$\\| $$|  $$$$$$$|  $$$$$$\\"
+                        ,"| $$$$$$$\\| $$| $$    $$| $$  | $$ \\$$\\  $$ | $$    $$| $$  | $$| $$| $$  | $$| $$  | $$"
+                        ,"| $$__/ $$| $$| $$$$$$$$| $$  | $$  \\$$ $$  | $$$$$$$$| $$  | $$| $$| $$__| $$| $$__/ $$"
+                        ,"| $$    $$| $$ \\$$     \\| $$  | $$   \\$$$    \\$$     \\| $$  | $$| $$ \\$$    $$ \\$$    $$"
+                        ," \\$$$$$$$  \\$$  \\$$$$$$$ \\$$   \\$$    \\$      \\$$$$$$$ \\$$   \\$$ \\$$  \\$$$$$$$  \\$$$$$$ "]

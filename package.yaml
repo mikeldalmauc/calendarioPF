@@ -23,6 +23,7 @@ ghc-options: -Wall -XRecordWildCards -XDisambiguateRecordFields -XNamedFieldPuns
 library:
   dependencies:
   - base
+  - directory 
   source-dirs: library
 
 executables:

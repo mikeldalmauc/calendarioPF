@@ -3,7 +3,7 @@
 
 
 --  SUPERMERCADO         Programacion Funcional            curso 2018/19  --
-module Supermercado (BaseDatos (..), Producto (..), Codigo, Precio, eliminar, insertar, cambiarNombre, cambiarPrecio, consultarNombre, consultarPrecio, imprimir, imprimirPorNombre, imprimirPorPrecio)  where
+module Supermercado (BaseDatos (..), Producto (..), Codigo, Precio, defaultBD, eliminar, insertar, cambiarNombre, cambiarPrecio, consultarNombre, consultarPrecio, imprimir, imprimirPorNombre, imprimirPorPrecio)  where
 
 import Data.List (sortOn)
 
@@ -21,10 +21,20 @@ instance Show Producto where
     show Prod{..} = show codigo ++ lineaBlancos numBlancos ++ nombre ++ " " ++ lineaPuntos numPuntos ++ " " ++ show precio
         where
             numBlancos  = anchuraImprimirCod - length (show codigo)
-            numPuntos   = anchuraImprimir - length (show nombre) - length (show precio)
+            numPuntos   = anchuraImprimirNombre - length nombre
 
 newtype BaseDatos = BD [Producto]
 
+--  Base de datos para pruebas  ---------------------
+
+defaultBD :: IO BaseDatos
+defaultBD = return (BD [Prod 1111 "Chupa Chups" 0.21,             
+            Prod 1112 "Chupa Chups (bolsa gigante)" 1.33,
+            Prod 1234 "Tio Pepe, 1lt" 5.40,
+            Prod 3814 "Cacahuetes" 0.56,
+            Prod 4719 "Fritos de maiz" 1.21,
+            Prod 5643 "Dodotis" 10.10] )
+                          
 --------------------------------------------------------------------------------------
 -- Variables definidas para imprimir en el terminal de manera estructurada
 --------------------------------------------------------------------------------------
@@ -33,9 +43,13 @@ anchuraImprimirCod :: Int
 -- Variable que alberga la anchura de la columna donde se imprime el código
 anchuraImprimirCod = 8
 
-anchuraImprimir :: Int
--- Variable que alberga la anchura de la columna donde se imprime el resto de la información
-anchuraImprimir = 40
+anchuraImprimirNombre :: Int
+-- Variable que alberga la anchura de la columna donde se imprime el nombre
+anchuraImprimirNombre = 40
+
+-- anchuraImprimirPrecio :: Int
+-- -- Variable que alberga la anchura de la columna donde se imprime el precio
+-- anchuraImprimirPrecio = 8
 
 --------------------------------------------------------------------------------------
 -- Funciones principales sobre la BaseDatos
@@ -62,15 +76,16 @@ insertar :: Producto -> BaseDatos -> BaseDatos
 --                              un código nuevo (el código más alto + 1).
 insertar Prod{..} (BD xs) = 
     if codigo < 0 then 
-        BD (xs ++ [Prod{codigo = proximoCodigo xs,..}]) 
+        BD (xs ++ [Prod{codigo = proximoCodigo xs, precio = pre,..}]) 
     else 
         case buscar codigo xs of 
-            (Nothing,_)     -> BD (insertarOrdenado Prod{..} xs)
+            (Nothing,_)     -> BD (insertarOrdenado Prod{precio = pre,..} xs)
             (Just index,_)  -> 
                 let 
                     (as, _:bs) = splitAt index xs
                 in 
-                    BD (as ++ Prod{..}:bs)
+                    BD (as ++ Prod{precio = pre,..}:bs)
+    where pre = validatePrice precio
 
 --------------------------------------------------------------------------------------
 -- Funciones basicas sobre productos:
@@ -95,7 +110,7 @@ cambiarPrecio pre cod (BD xs) =
     case buscar cod xs of
         (_,Just Prod{..}) -> insertar Prod{precio=pre,..} (BD xs) 
         (_,_)     -> error ("No existe ningun producto con el codigo: " ++ show cod ++ "#")
-
+        
 consultarNombre :: Codigo -> BaseDatos -> Nombre
 -- consultarNombre cod bd = el nombre del producto de código cod en la base de datos bd
 --                          Si no existe el producto da error
@@ -170,7 +185,7 @@ imprimir (BD l) = do
         s1              = "Código"
         s2              = "Nombre producto"
         s3              = "Precio"
-        numBlancos      = anchuraImprimir - length s2 - length s3
+        numBlancos      = anchuraImprimirNombre - length s2
         numBlancosCod   = anchuraImprimirCod - length s1
         
 imprimirPorNombre :: BaseDatos -> IO()
@@ -188,3 +203,12 @@ lineaPuntos n = replicate n '.'
 lineaBlancos :: Int -> String
 -- devuelve un string con n número de espacios blancos
 lineaBlancos n = replicate n ' '
+
+validatePrice :: Float -> Float
+-- Redondea un precio a 2 decimales
+validatePrice p = truncate' p 2
+
+truncate' ::  Float -> Int -> Float
+-- Redondea un valor a número de decimales definidos
+truncate' x n = fromIntegral (ceiling (x * t)) / t
+    where t = 10^n

@@ -1,6 +1,6 @@
 1111
-Cervezas caja
-7.9
+jam¢n jabugo
+1222.23
 1112
 Patatas bolsa
 1.4
@@ -19,3 +19,6 @@ Tomates rama
 5643
 Detergente lavadora
 10.1
+5644
+jam¢n
+112.99
