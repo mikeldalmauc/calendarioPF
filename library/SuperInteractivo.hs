@@ -1,11 +1,9 @@
 ------------------------------------------------------------------------
 -- Nombre(s) : Mikel Dalmau y Julen Fernandino
--- ¿Tratas los errores referentes a la clave del producto? 
-------------------------------------------------------------------------
-
 
 -- SUPERMERCADO INTERACTIVO   Programacion Funcional  curso 2018/19 ----
 
+------------------------------------------------------------------------
 
 module SuperInteractivo where
 
@@ -23,14 +21,6 @@ import Supermercado
 type Archivo = String
 type Orden = String
 
-defaultPathBD :: IO FilePath
--- La siguiente función intenta buscar en el directorio actual y en sus subdirectorios por el archivo productos.txt
-defaultPathBD = do
-                path <- getCurrentDirectory
-                pathList <- listDirectory path
-                files <- findFiles (path:pathList) "productos.txt"
-                return (head files)
-
 data Modelo = Model {bd ::BaseDatos, pathBD ::FilePath , cerrar::Bool}
 
 initModel :: IO Modelo
@@ -45,7 +35,7 @@ initModel = do
 -----------------------------------------------------------------------------------------------------------------------
 
 -- Funcion que guarda la Base de datos de un supermercado en un archivo.
--- Se espera que el archivo está en el directorio desde el que hemos arrancado
+-- Se espera que el archivo esté en el directorio desde el que hemos arrancado
 guardaBD :: BaseDatos -> Archivo -> IO ()
 guardaBD (BD xs) archivo = do
             writeFile archivo (unlines (concatMap (\Prod{..} -> [show codigo, nombre, show precio]) (sortOn codigo xs)))
@@ -70,8 +60,17 @@ recuperaBD archivo = catch (do
                                 return $! bd'
 
 parseEntry :: [Producto] -> [String] -> [Producto]
+-- Lee los valores de la base de datos y crea la lista de productos
 parseEntry bd (a:b:c:xs) = parseEntry (bd ++ [Prod (read a :: Codigo) b (read c :: Precio)]) xs
 parseEntry bd _        = bd
+
+defaultPathBD :: IO FilePath
+-- La siguiente función intenta buscar en el directorio actual y en sus subdirectorios por el archivo productos.txt
+defaultPathBD = do
+                path <- getCurrentDirectory
+                pathList <- listDirectory path
+                files <- findFiles (path:pathList) "productos.txt"
+                return (head files)
 
 -----------------------------------------------------------------------------------------------------------------------
 --- Interaccion con el supermercado

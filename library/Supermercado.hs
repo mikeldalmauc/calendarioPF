@@ -1,8 +1,10 @@
-
+------------------------------------------------------------------------
 -- Nombre(s): Mikel Dalmau y Julen Fernandino
 
-
 --  SUPERMERCADO         Programacion Funcional            curso 2018/19  --
+
+------------------------------------------------------------------------
+
 module Supermercado (BaseDatos (..), Producto (..), Codigo, Precio, defaultBD, eliminar, insertar, cambiarNombre, cambiarPrecio, consultarNombre, consultarPrecio, imprimir, imprimirPorNombre, imprimirPorPrecio)  where
 
 import Data.List (sortOn)
@@ -46,10 +48,6 @@ anchuraImprimirCod = 8
 anchuraImprimirNombre :: Int
 -- Variable que alberga la anchura de la columna donde se imprime el nombre
 anchuraImprimirNombre = 40
-
--- anchuraImprimirPrecio :: Int
--- -- Variable que alberga la anchura de la columna donde se imprime el precio
--- anchuraImprimirPrecio = 8
 
 --------------------------------------------------------------------------------------
 -- Funciones principales sobre la BaseDatos
@@ -169,6 +167,7 @@ ordenarPorNombre (x:xs)  = ordenarPorNombre menor ++ [x] ++ ordenarPorNombre may
         mayor   = [lis | lis <- xs, nombre x <= nombre lis]
 
 ordenarPorPrecio :: [Producto] -> [Producto]
+-- Ordena de menor a mayor por precio
 ordenarPorPrecio = sortOn precio
 
 --------------------------------------------------------------------------------------
