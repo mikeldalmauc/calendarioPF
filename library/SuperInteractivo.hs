@@ -177,9 +177,8 @@ camNom Model{..} = do
             return Model{bd = cambiarNombre nombre cod bd, ..}
 
 metPro :: Modelo -> IO Modelo
-metPro Model{..} = do 
-            putStr "Codigo? "
-            cod <- leerNumero
+metPro Model{..} = do
+            cod <- leerCodigoLibre bd
             putStr "Nombre? "
             nom <- getLine
             putStr "Precio? "
@@ -276,6 +275,17 @@ leerFloat = do
                 Nothing -> error "El valor introducido tiene que ser un numero valido.#"
                 Just val -> return val
 
+
+leerCodigoLibre :: BaseDatos -> IO Codigo
+leerCodigoLibre bd = do
+        putStr "Codigo? "
+        cod <- leerNumero
+        if estaCodigo cod bd
+                then do 
+                        putStrLn "El codigo existe, introduzca otro." 
+                        leerCodigoLibre bd
+                else do 
+                        return cod
 
 leerCodigoExistente :: BaseDatos -> IO Codigo
 leerCodigoExistente bd = do
