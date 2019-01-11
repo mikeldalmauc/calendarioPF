@@ -5,7 +5,7 @@
 
 ------------------------------------------------------------------------
 
-module Supermercado (BaseDatos (..), Producto (..), Codigo, Precio, defaultBD, eliminar, insertar, cambiarNombre, cambiarPrecio, consultarNombre, consultarPrecio, imprimir, imprimirPorNombre, imprimirPorPrecio)  where
+module Supermercado (BaseDatos (..), Producto (..), Codigo, Precio, defaultBD, eliminar, estaCodigo, insertar, cambiarNombre, cambiarPrecio, consultarNombre, consultarPrecio, imprimir, imprimirPorNombre, imprimirPorPrecio)  where
 
 import Data.List (sortOn)
 
@@ -65,6 +65,15 @@ eliminar cod  (BD xs) =
                 in 
                     BD (as ++ bs)    
             (_,_) -> error ("No existe ningun producto con el codigo: " ++ show cod ++ "#")
+
+-- Funciones principales sobre la BaseDatos
+
+
+estaCodigo :: Codigo -> BaseDatos -> Bool
+estaCodigo cod (BD xs) =
+    case buscar cod xs of
+        (Just index, _) -> True
+        (_,_)           -> False 
 
 
 insertar :: Producto -> BaseDatos -> BaseDatos

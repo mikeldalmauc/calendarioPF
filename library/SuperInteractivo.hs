@@ -188,8 +188,7 @@ metPro Model{..} = do
 
 eliPro :: Modelo -> IO Modelo
 eliPro Model{..} = do 
-            putStr "Codigo? "
-            cod <- leerNumero
+            cod <- leerCodigoExistente bd
             return Model{bd = eliminar cod bd, ..}
 
 mosBD :: Modelo -> IO Modelo
@@ -276,6 +275,19 @@ leerFloat = do
             case cod of
                 Nothing -> error "El valor introducido tiene que ser un numero valido.#"
                 Just val -> return val
+
+
+leerCodigoExistente :: BaseDatos -> IO Codigo
+leerCodigoExistente bd = do
+        putStr "Codigo? "
+        cod <- leerNumero
+        if not (estaCodigo cod bd)
+                then do 
+                    putStrLn "El codigo no existe, introduzca otro." 
+                    leerCodigoExistente bd
+                else do 
+                    return cod
+
 
 bienvenida :: String
 bienvenida =  unlines [ " _______   __                                                    __        __           "
